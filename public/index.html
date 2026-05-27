@@ -562,15 +562,11 @@
 
 <!-- Google Sheets backend (Apps Script web app — 100% free) -->
 <script>
-// ── Paste your Apps Script Web App URL here after setup ──
-// See instructions below the app or in README
-const SHEET_URL = localStorage.getItem('fow_sheet_url') || ''
+// ── Google Sheets backend URL (hardcoded — works for everyone) ──
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwUO0QhXUuE2T6O6rF0W8ui2Xv7zDKCS5knD0qQYDQ/exec'
 
 window._syncToSheet = async function(data) {
-  if (!SHEET_URL) {
-    showSheetSetup()
-    return false
-  }
+  if (!SHEET_URL) { toast('⚠️ No server URL configured'); return false }
   try {
     const params = new URLSearchParams({
       action:  'sync',
@@ -593,7 +589,7 @@ window._syncToSheet = async function(data) {
 }
 
 window._loadBoard = async function(family) {
-  if (!SHEET_URL) { showSheetSetup(); return }
+  if (!SHEET_URL) return
   try {
     const params = new URLSearchParams({ action: 'board', family: family.toLowerCase(), date: todayStr() })
     const res  = await fetch(SHEET_URL + '?' + params)
