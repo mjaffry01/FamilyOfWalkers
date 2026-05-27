@@ -320,8 +320,8 @@
     <h2>Family of Walkers</h2>
     <p style="margin-bottom:1.25rem">Enter your name to get started.</p>
 
-    <!-- Install button -->
-    <div id="installRow" style="display:none;margin-bottom:1rem">
+    <!-- Install button — always visible -->
+    <div id="installRow" style="margin-bottom:1rem">
       <button id="btnInstallSetup" onclick="installApp()" style="
         width:100%;padding:.75rem;
         background:linear-gradient(135deg,#1a3a5c,#2980b9);
@@ -1144,17 +1144,21 @@ window.addEventListener('beforeinstallprompt', e => {
   document.getElementById('installBanner').style.display = 'flex'
 })
 
-// iOS — show "Add to Home Screen" hint
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
 const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
-if (isIOS && !isInStandaloneMode) {
-  document.getElementById('installRow').style.display = 'block'
-  document.getElementById('btnInstallSetup').innerHTML = '📲 Add to Home Screen'
+
+// If already installed as PWA, hide the install button
+if (isInStandaloneMode) {
+  document.getElementById('installRow').style.display = 'none'
+} else if (isIOS) {
+  // iPhone: show tap-share instructions
+  document.getElementById('btnInstallSetup').innerHTML = '📲 Install on iPhone — tap here'
   document.getElementById('iosInstallHint').style.display = 'block'
 }
 
 window.installApp = function() {
   if (dip) {
+    // Android / Chrome — native prompt
     dip.prompt()
     dip.userChoice.then(() => {
       dip = null
@@ -1162,7 +1166,12 @@ window.installApp = function() {
       document.getElementById('installBanner').style.display = 'none'
     })
   } else if (isIOS) {
-    document.getElementById('iosInstallHint').style.display = 'block'
+    // Toggle hint visibility
+    const hint = document.getElementById('iosInstallHint')
+    hint.style.display = hint.style.display === 'none' ? 'block' : 'none'
+  } else {
+    // Desktop Chrome / other — show manual instructions
+    toast('Open this app in Chrome on your phone to install it 📱')
   }
 }
 
