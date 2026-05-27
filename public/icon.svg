@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0f2027"/>
+
+  <!-- Outer rings -->
+  <circle cx="256" cy="256" r="228" fill="none" stroke="#2ecc71" stroke-width="3" opacity="0.2"/>
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#f0c040" stroke-width="2" opacity="0.15"/>
+
+  <!-- Ground / path -->
+  <ellipse cx="256" cy="390" rx="160" ry="22" fill="#1a3a25" opacity="0.8"/>
+  <path d="M140 390 Q256 368 372 390" fill="none" stroke="#2ecc71" stroke-width="3" opacity="0.4" stroke-dasharray="12 8"/>
+
+  <!-- Walker figure -->
+  <!-- Head -->
+  <circle cx="256" cy="148" r="32" fill="#f0c040"/>
+  <!-- Body -->
+  <path d="M256 180 L248 260 L232 330" stroke="#2ecc71" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <path d="M256 180 L268 260 L288 330" stroke="#2ecc71" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <!-- Arms -->
+  <path d="M250 210 L210 250" stroke="#f0c040" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <path d="M260 210 L300 260" stroke="#f0c040" stroke-width="14" stroke-linecap="round" fill="none"/>
+
+  <!-- Steps / foot prints -->
+  <ellipse cx="210" cy="370" rx="16" ry="10" fill="#2ecc71" opacity="0.6" transform="rotate(-20,210,370)"/>
+  <ellipse cx="300" cy="385" rx="16" ry="10" fill="#2ecc71" opacity="0.4" transform="rotate(15,300,385)"/>
+
+  <!-- Heart beat line -->
+  <polyline points="94,290 134,290 150,258 164,322 178,258 192,290 256,290 270,270 284,310 298,270 312,290 418,290"
+    fill="none" stroke="#e74c3c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+
+  <!-- Water drops (right side) -->
+  <text x="400" y="200" font-size="36" text-anchor="middle" opacity="0.7">💧</text>
+
+  <!-- Stars / tasbi dots (left side) -->
+  <circle cx="118" cy="195" r="5" fill="#f0c040" opacity="0.8"/>
+  <circle cx="103" cy="210" r="4" fill="#f0c040" opacity="0.6"/>
+  <circle cx="116" cy="226" r="5" fill="#f0c040" opacity="0.8"/>
+  <circle cx="103" cy="242" r="4" fill="#f0c040" opacity="0.5"/>
+  <circle cx="118" cy="256" r="5" fill="#f0c040" opacity="0.7"/>
+
+  <!-- App name -->
+  <text x="256" y="468"
+    text-anchor="middle"
+    fill="#f0c040"
+    font-size="28"
+    font-family="Georgia, serif"
+    font-weight="bold"
+    letter-spacing="3"
+    opacity="0.9">FAMILY WALKERS</text>
+</svg>

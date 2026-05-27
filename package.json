@@ -1,0 +1,9 @@
+{
+  "name": "family-of-walkers",
+  "version": "1.0.0",
+  "description": "Family pedometer PWA — steps, water, tasbi & shared scoreboard",
+  "scripts": {
+    "start": "npx serve public -l 3000",
+    "dev":   "npx serve public -l 3000"
+  }
+}
