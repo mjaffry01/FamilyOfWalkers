@@ -1,1218 +1,1124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Family of Walkers</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#101820"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FamilyWalk"/>
+  <link rel="apple-touch-icon" href="/icon-192.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
 
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#0f2027" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="FamilyWalk" />
-  <link rel="apple-touch-icon" href="/icon.svg" />
-  <meta name="description" content="Family pedometer — track steps, water & tasbi together." />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
-  <!-- Bootstrap 5 + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet" />
+:root{
+  --bg:#101820;
+  --card:#1a2535;
+  --card2:#1f2d3d;
+  --green:#2ecc71;
+  --green2:#27ae60;
+  --gold:#f0c040;
+  --blue:#3498db;
+  --red:#e74c3c;
+  --text:#f0f4f8;
+  --muted:#7a94b0;
+  --border:rgba(255,255,255,0.07);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
 
-  <style>
-    :root {
-      --bg:      #0f2027;
-      --bg2:     #162535;
-      --card:    #1a2f42;
-      --border:  rgba(255,255,255,0.08);
-      --green:   #2ecc71;
-      --green2:  #27ae60;
-      --gold:    #f0c040;
-      --blue:    #3498db;
-      --red:     #e74c3c;
-      --teal:    #1abc9c;
-      --text:    #e8f0f7;
-      --muted:   #6b8aad;
-    }
+html,body{
+  height:100%; background:var(--bg);
+  color:var(--text); font-family:'Inter',sans-serif;
+  overflow:hidden; /* prevent body scroll — pages scroll internally */
+  -webkit-font-smoothing:antialiased;
+}
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Shell ── */
+.shell{
+  display:flex; flex-direction:column;
+  height:100vh; height:100dvh;
+  max-width:500px; margin:0 auto;
+  position:relative;
+  border-left:1px solid var(--border);
+  border-right:1px solid var(--border);
+}
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
-      font-size: 16px;
-    }
+/* ── Pages ── */
+.pages{flex:1;overflow:hidden;position:relative;}
+.page{
+  position:absolute;inset:0;
+  overflow-y:auto;overflow-x:hidden;
+  padding-bottom:80px;
+  display:none;
+  -webkit-overflow-scrolling:touch;
+}
+.page.active{display:block;}
 
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse 70% 50% at 10% 10%, rgba(46,204,113,.06) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 90% 90%, rgba(52,152,219,.05) 0%, transparent 60%);
-      pointer-events: none; z-index: 0;
-    }
+/* ── Bottom nav ── */
+.nav{
+  height:calc(64px + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);
+  background:rgba(16,24,32,0.98);
+  border-top:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  display:flex; flex-shrink:0;
+}
+.nav-item{
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:4px; background:none; border:none;
+  color:var(--muted); font-size:11px; font-weight:600;
+  letter-spacing:.3px; cursor:pointer;
+  transition:color .2s; font-family:'Inter',sans-serif;
+  padding:0;
+}
+.nav-item i{font-size:22px; display:block;}
+.nav-item.on{color:var(--green);}
 
-    /* ── Nav tabs ──────────────────────────────── */
-    .bottom-nav {
-      position: fixed; bottom: 0;
-      left: 50%; transform: translateX(-50%);
-      width: 100%; max-width: 480px;
-      background: rgba(15,32,39,.97);
-      border-top: 1px solid var(--border);
-      backdrop-filter: blur(12px);
-      display: flex; align-items: stretch;
-      height: 64px;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      z-index: 100;
-    }
-    .nav-btn {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 3px; background: none; border: none;
-      color: var(--muted); font-size: .65rem; font-weight: 600;
-      letter-spacing: .5px; text-transform: uppercase;
-      cursor: pointer; transition: color .2s;
-    }
-    .nav-btn i { font-size: 1.4rem; }
-    .nav-btn.active { color: var(--green); }
+/* ── Setup screen ── */
+.setup{
+  position:fixed;inset:0;z-index:200;
+  background:linear-gradient(160deg,#0a1420 0%,#0f1e2e 50%,#0a1420 100%);
+  display:flex;align-items:center;justify-content:center;
+  padding:1.5rem;
+  overflow-y:auto;
+}
+.setup-box{
+  width:100%;max-width:400px;
+  text-align:center;
+}
+.setup-logo{font-size:4rem;margin-bottom:.5rem;display:block;}
+.setup-title{
+  font-size:1.8rem;font-weight:800;
+  background:linear-gradient(135deg,#f0c040,#ffe082);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:.3rem;
+}
+.setup-sub{color:var(--muted);font-size:.9rem;margin-bottom:2rem;line-height:1.5;}
 
-    /* ── App shell ──────────────────────────────── */
-    .app-shell {
-      width: 100%;
-      min-height: 100vh;
-      position: relative;
-    }
-    /* On tablets/desktop: cap width and centre */
-    @media (min-width: 600px) {
-      .app-shell {
-        max-width: 560px;
-        margin: 0 auto;
-        border-left: 1px solid var(--border);
-        border-right: 1px solid var(--border);
-      }
-    }
+.install-btn{
+  width:100%;padding:1rem;margin-bottom:1rem;
+  background:linear-gradient(135deg,#1a3a5c,#2574a9);
+  border:1px solid rgba(52,152,219,.4);
+  border-radius:14px;color:#fff;
+  font-weight:700;font-size:1rem;
+  font-family:'Inter',sans-serif;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+}
+.ios-hint{
+  background:rgba(52,152,219,.1);border:1px solid rgba(52,152,219,.25);
+  border-radius:10px;padding:.75rem;margin-bottom:1rem;
+  font-size:.85rem;color:#7fb3d3;line-height:1.6;display:none;
+}
 
-    /* ── Pages ─────────────────────────────────── */
-    .page { display: none; min-height: calc(100vh - 64px); padding: 0 0 80px; position: relative; z-index: 1; }
-    .page.active { display: block; }
+.inp{
+  width:100%;padding:1rem 1.2rem;
+  background:rgba(255,255,255,.06);
+  border:1.5px solid var(--border);
+  border-radius:14px;color:var(--text);
+  font-size:1rem;font-family:'Inter',sans-serif;
+  outline:none;margin-bottom:.75rem;
+  text-align:center;transition:border-color .2s;
+}
+.inp:focus{border-color:rgba(46,204,113,.5);}
+.inp::placeholder{color:var(--muted);}
 
-    /* ── Setup overlay ─────────────────────────── */
-    #setupOverlay {
-      position: fixed; inset: 0; background: rgba(10,20,28,.96);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 200; padding: 1.5rem;
-      /* make content readable on large screens */
-    }
-    #setupOverlay .setup-card {
-      max-width: 400px;
-      width: 100%;
-    }
-    .setup-card {
-      background: var(--card);
-      border: 1px solid rgba(46,204,113,.3);
-      border-radius: 20px; padding: 2.5rem 2rem;
-      width: 100%; max-width: 420px; text-align: center;
-    }
-    .setup-card h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.8rem; margin-bottom: .4rem; }
-    .setup-card p  { color: var(--muted); font-size: .95rem; margin-bottom: 1.5rem; }
-    .setup-input {
-      width: 100%; padding: 1rem 1.2rem;
-      background: rgba(255,255,255,.06); border: 1px solid var(--border);
-      border-radius: 12px; color: var(--text); font-size: 1.1rem;
-      font-family: inherit; outline: none; margin-bottom: .85rem;
-      text-align: center;
-    }
-    .setup-input:focus { border-color: rgba(46,204,113,.5); }
-    .setup-input::placeholder { color: var(--muted); }
-    .btn-green {
-      width: 100%; padding: 1rem;
-      background: linear-gradient(135deg, var(--green2), var(--green));
-      border: none; border-radius: 12px; color: #fff;
-      font-weight: 700; font-size: 1.05rem; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(46,204,113,.3);
-      transition: transform .15s;
-    }
-    .btn-green:active { transform: scale(.97); }
+.btn-primary{
+  width:100%;padding:1rem;
+  background:linear-gradient(135deg,var(--green2),var(--green));
+  border:none;border-radius:14px;color:#fff;
+  font-weight:700;font-size:1.05rem;
+  font-family:'Inter',sans-serif;
+  cursor:pointer;
+  box-shadow:0 4px 20px rgba(46,204,113,.3);
+  transition:transform .15s,box-shadow .15s;
+  margin-bottom:.6rem;
+}
+.btn-primary:active{transform:scale(.97);box-shadow:0 2px 10px rgba(46,204,113,.2);}
 
-    /* ── Header ────────────────────────────────── */
-    .app-header {
-      padding: 1.2rem 1rem .5rem;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .app-title { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--gold); }
-    .user-chip {
-      display: flex; align-items: center; gap: .4rem;
-      background: rgba(255,255,255,.06); border: 1px solid var(--border);
-      border-radius: 20px; padding: .3rem .75rem;
-      font-size: .75rem; color: var(--muted); cursor: pointer;
-    }
-    .user-chip i { color: var(--green); }
+.choice-row{display:flex;gap:.6rem;margin-bottom:.75rem;}
+.btn-choice{
+  flex:1;padding:.85rem .5rem;
+  border-radius:12px;font-weight:700;
+  font-size:.9rem;cursor:pointer;
+  font-family:'Inter',sans-serif;
+  transition:transform .15s;
+}
+.btn-choice:active{transform:scale(.95);}
+.btn-create{background:rgba(46,204,113,.15);border:1.5px solid rgba(46,204,113,.4);color:var(--green);}
+.btn-join  {background:rgba(255,255,255,.06);border:1.5px solid var(--border);color:var(--text);}
 
-    /* ── Walk page ─────────────────────────────── */
-    .steps-circle-wrap {
-      display: flex; justify-content: center;
-      padding: 1.5rem 1rem .5rem;
-    }
-    .steps-circle {
-      position: relative; width: 220px; height: 220px;
-    }
-    .steps-circle svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-    .steps-circle-inner {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
-    .steps-num {
-      font-size: 3rem; font-weight: 700; line-height: 1;
-      background: linear-gradient(135deg, var(--green), #a8f5c9);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .steps-lbl { font-size: .75rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-    .steps-goal { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+.code-row{display:flex;gap:.5rem;margin-bottom:.75rem;}
+.code-val{
+  flex:1;padding:1rem;
+  background:rgba(240,192,64,.08);
+  border:1.5px solid rgba(240,192,64,.3);
+  border-radius:12px;color:var(--gold);
+  font-size:1rem;font-weight:700;
+  letter-spacing:2px;font-family:'Inter',sans-serif;
+  text-align:center;outline:none;
+}
+.btn-regen{
+  padding:.8rem 1rem;background:rgba(255,255,255,.07);
+  border:1.5px solid var(--border);border-radius:12px;
+  color:var(--muted);font-size:1.2rem;cursor:pointer;
+}
+.btn-wa{
+  width:100%;padding:1rem;
+  background:#25D366;border:none;border-radius:14px;
+  color:#fff;font-weight:700;font-size:1rem;
+  font-family:'Inter',sans-serif;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+}
+.btn-back{
+  background:none;border:none;color:var(--muted);
+  font-size:.85rem;cursor:pointer;
+  font-family:'Inter',sans-serif;margin-top:.5rem;
+  padding:.5rem;
+}
+.setup-note{font-size:.75rem;color:var(--muted);margin-bottom:.75rem;}
 
-    .stat-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: .75rem; padding: .75rem 1rem;
-    }
-    .stat-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 16px; padding: 1rem .875rem;
-      display: flex; flex-direction: column; gap: .25rem;
-    }
-    .stat-card .s-icon { font-size: 1.4rem; margin-bottom: .2rem; }
-    .stat-card .s-val { font-size: 1.4rem; font-weight: 700; }
-    .stat-card .s-lbl { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+/* ── Walk page ── */
+.page-header{
+  padding:1.2rem 1.2rem .5rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.page-title{font-size:1.1rem;font-weight:700;color:var(--text);}
+.user-tag{
+  display:flex;align-items:center;gap:.4rem;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:.35rem .85rem;
+  font-size:.78rem;color:var(--muted);cursor:pointer;
+}
+.user-tag i{color:var(--green);}
 
-    .walk-controls {
-      display: flex; gap: .75rem;
-      padding: .5rem 1rem 1rem; justify-content: center;
-    }
-    .btn-walk {
-      flex: 1; max-width: 160px; padding: .85rem;
-      border: none; border-radius: 14px; font-weight: 700;
-      font-size: .95rem; cursor: pointer; transition: transform .15s;
-      display: flex; align-items: center; justify-content: center; gap: .4rem;
-    }
-    .btn-walk:active { transform: scale(.95); }
-    .btn-start { background: linear-gradient(135deg,var(--green2),var(--green)); color: #fff; box-shadow: 0 4px 16px rgba(46,204,113,.3); }
-    .btn-stop  { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.3); color: var(--red); }
-    .btn-sync  { background: linear-gradient(135deg,#2980b9,var(--blue)); color: #fff; box-shadow: 0 4px 16px rgba(52,152,219,.25); }
+/* Steps ring */
+.ring-wrap{
+  display:flex;justify-content:center;
+  padding:1rem 1rem .25rem;
+}
+.ring{position:relative;width:min(240px,70vw);height:min(240px,70vw);}
+.ring svg{position:absolute;inset:0;}
+.ring-inner{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+}
+.ring-num{
+  font-size:clamp(2.4rem,10vw,3.2rem);
+  font-weight:900;line-height:1;
+  background:linear-gradient(135deg,#2ecc71,#a8f5c9);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.ring-lbl{font-size:.7rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.ring-goal{font-size:.7rem;color:rgba(255,255,255,.25);margin-top:1px;}
 
-    .heart-bar-wrap { padding: 0 1rem .5rem; }
-    .heart-bar-head { display: flex; justify-content: space-between; margin-bottom: .4rem; }
-    .heart-bar-head span:first-child { font-size: .75rem; color: var(--muted); }
-    .heart-bar-head span:last-child  { font-size: .8rem; font-weight: 600; }
-    .heart-bar { height: 8px; background: rgba(255,255,255,.08); border-radius: 8px; overflow: hidden; }
-    .heart-fill { height: 100%; border-radius: 8px; transition: width .4s; background: linear-gradient(90deg,#e74c3c,#e91e63); }
+/* Stats */
+.stats{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:.6rem;padding:.5rem 1rem;
+}
+.stat{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:.9rem 1rem;
+}
+.stat-icon{font-size:1.5rem;margin-bottom:.2rem;}
+.stat-val{font-size:1.5rem;font-weight:800;line-height:1.1;}
+.stat-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
 
-    /* ── Water page ────────────────────────────── */
-    .water-hero { text-align: center; padding: 2rem 1rem 1rem; }
-    .water-icon { font-size: 5rem; line-height: 1; }
-    .water-count { font-size: 4rem; font-weight: 700; color: var(--blue); line-height: 1.1; margin: .5rem 0; }
-    .water-goal-lbl { color: var(--muted); font-size: .85rem; }
-    .glasses-grid {
-      display: flex; flex-wrap: wrap; gap: .5rem;
-      justify-content: center; padding: 1rem 1.5rem;
-    }
-    .glass-dot {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: rgba(52,152,219,.12); border: 2px solid rgba(52,152,219,.25);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem; transition: all .2s;
-    }
-    .glass-dot.filled { background: rgba(52,152,219,.35); border-color: var(--blue); }
-    .water-btns { display: flex; gap: .75rem; padding: .5rem 1rem 1rem; justify-content: center; }
-    .btn-water {
-      flex: 1; max-width: 140px; padding: .8rem;
-      border: none; border-radius: 14px; font-weight: 700;
-      font-size: 1.3rem; cursor: pointer; transition: transform .15s;
-    }
-    .btn-water:active { transform: scale(.93); }
-    .btn-add { background: linear-gradient(135deg,#2980b9,var(--blue)); color: #fff; }
-    .btn-rem { background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--muted); }
-    .water-tip { text-align: center; color: var(--muted); font-size: .78rem; padding: 0 1.5rem 1rem; }
+/* HR zone bar */
+.hr-card{
+  margin:.5rem 1rem;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:.9rem 1rem;
+}
+.hr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;}
+.hr-head-lbl{font-size:.75rem;color:var(--muted);font-weight:500;}
+.hr-zone{font-size:.82rem;font-weight:700;}
+.hr-track{height:8px;background:rgba(255,255,255,.07);border-radius:8px;overflow:hidden;}
+.hr-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#e74c3c,#e91e63);transition:width .4s;}
 
-    /* ── Tasbi page ────────────────────────────── */
-    .tasbi-wrap { text-align: center; padding: 1.5rem 1rem; }
-    .tasbi-count-display {
-      font-size: 5rem; font-weight: 700; line-height: 1;
-      background: linear-gradient(135deg, var(--gold), #ffe082);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: .3rem;
-    }
-    .tasbi-sub { color: var(--muted); font-size: .8rem; letter-spacing: 2px; text-transform: uppercase; }
-    .tasbi-targets { display: flex; gap: .5rem; justify-content: center; margin: 1rem 0; }
-    .tasbi-target {
-      padding: .3rem .9rem; border-radius: 20px;
-      background: rgba(255,255,255,.06); border: 1px solid var(--border);
-      font-size: .78rem; color: var(--muted); cursor: pointer; transition: all .2s;
-    }
-    .tasbi-target.active { background: rgba(240,192,64,.15); border-color: rgba(240,192,64,.4); color: var(--gold); }
-    .tasbi-btn {
-      width: 190px; height: 190px; border-radius: 50%;
-      background: radial-gradient(circle at 38% 35%, #2a4a30, #1a3020);
-      border: 3px solid rgba(46,204,113,.3);
-      box-shadow: 0 0 40px rgba(46,204,113,.15), inset 0 0 30px rgba(0,0,0,.3);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      cursor: pointer; margin: 0 auto 1.5rem;
-      transition: transform .1s, box-shadow .1s;
-      user-select: none; -webkit-user-select: none;
-    }
-    .tasbi-btn:active { transform: scale(.93); box-shadow: 0 0 20px rgba(46,204,113,.3), inset 0 0 30px rgba(0,0,0,.5); }
-    .tasbi-btn-icon { font-size: 3rem; pointer-events: none; }
-    .tasbi-btn-lbl  { font-size: .7rem; color: var(--green); letter-spacing: 2px; pointer-events: none; }
-    .tasbi-phrase {
-      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-      padding: .875rem 1rem; margin: 0 1rem 1rem; text-align: center;
-    }
-    .tasbi-phrase .arabic { font-size: 1.4rem; color: var(--gold); margin-bottom: .25rem; direction: rtl; }
-    .tasbi-phrase .roman  { font-size: .78rem; color: var(--muted); }
-    .tasbi-reset {
-      background: none; border: 1px solid var(--border);
-      color: var(--muted); padding: .5rem 1.5rem;
-      border-radius: 10px; cursor: pointer; font-size: .82rem;
-      transition: all .2s; margin-bottom: 1rem;
-    }
-    .tasbi-reset:active { background: rgba(255,255,255,.05); }
+/* Walk buttons */
+.walk-btns{
+  display:flex;gap:.6rem;
+  padding:.6rem 1rem 0;
+}
+.wbtn{
+  flex:1;padding:1rem;border-radius:14px;
+  font-weight:700;font-size:.95rem;
+  font-family:'Inter',sans-serif;
+  cursor:pointer;border:none;
+  display:flex;align-items:center;justify-content:center;gap:.4rem;
+  transition:transform .15s;
+}
+.wbtn:active{transform:scale(.95);}
+.wbtn-start{background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;box-shadow:0 4px 16px rgba(46,204,113,.3);}
+.wbtn-stop{background:rgba(231,76,60,.12);border:1.5px solid rgba(231,76,60,.3)!important;color:var(--red);}
+.wbtn-sync{background:linear-gradient(135deg,#2574a9,var(--blue));color:#fff;box-shadow:0 4px 16px rgba(52,152,219,.25);}
+.sensor-note{
+  text-align:center;padding:.6rem 1rem;
+  font-size:.72rem;color:rgba(255,255,255,.25);line-height:1.5;
+}
 
-    /* ── Scoreboard page ───────────────────────── */
-    .board-header { padding: 1rem 1rem .25rem; }
-    .board-header h3 { font-size: 1rem; font-weight: 700; }
-    .board-header p  { color: var(--muted); font-size: .78rem; }
-    .board-list { padding: .5rem 1rem; display: flex; flex-direction: column; gap: .6rem; }
-    .board-row {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; padding: .85rem 1rem;
-      display: flex; align-items: center; gap: .75rem;
-    }
-    .board-row.me { border-color: rgba(46,204,113,.35); background: rgba(46,204,113,.05); }
-    .board-rank { font-size: 1.2rem; min-width: 28px; text-align: center; }
-    .board-name { flex: 1; font-weight: 600; font-size: .9rem; }
-    .board-name small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
-    .board-steps { text-align: right; }
-    .board-steps .val { font-size: 1.1rem; font-weight: 700; color: var(--green); }
-    .board-steps .sub { font-size: .68rem; color: var(--muted); }
-    .board-empty { text-align: center; padding: 3rem 1rem; color: var(--muted); font-size: .85rem; }
-    .sync-strip {
-      margin: .75rem 1rem;
-      background: rgba(52,152,219,.08); border: 1px solid rgba(52,152,219,.2);
-      border-radius: 12px; padding: .75rem 1rem;
-      display: flex; align-items: center; gap: .75rem;
-    }
-    .sync-strip i { font-size: 1.3rem; color: var(--blue); }
-    .sync-strip p  { flex: 1; font-size: .78rem; color: var(--muted); margin: 0; }
-    .sync-strip button {
-      background: var(--blue); border: none; color: #fff;
-      padding: .4rem .9rem; border-radius: 8px; font-size: .78rem; font-weight: 600;
-      cursor: pointer; white-space: nowrap;
-    }
+/* ── Water page ── */
+.water-hero{
+  text-align:center;
+  padding:1.5rem 1rem 1rem;
+}
+.water-emoji{font-size:4.5rem;line-height:1;display:block;margin-bottom:.5rem;}
+.water-big{
+  font-size:5rem;font-weight:900;line-height:1;
+  color:var(--blue);
+}
+.water-big span{font-size:2.5rem;color:var(--muted);font-weight:500;}
+.water-msg{color:var(--muted);font-size:.9rem;margin-top:.4rem;}
 
-    /* ── Toast ─────────────────────────────────── */
-    .toast-box {
-      position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
-      background: rgba(30,50,65,.95); border: 1px solid var(--border);
-      border-radius: 10px; padding: .6rem 1.2rem;
-      font-size: .82rem; color: var(--text);
-      z-index: 999; opacity: 0; transition: opacity .3s;
-      pointer-events: none; white-space: nowrap;
-    }
-    .toast-box.show { opacity: 1; }
+.glass-grid{
+  display:flex;flex-wrap:wrap;gap:.5rem;
+  justify-content:center;padding:.75rem 1.5rem;
+}
+.glass{
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(52,152,219,.1);
+  border:2px solid rgba(52,152,219,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;transition:all .2s;
+}
+.glass.full{background:rgba(52,152,219,.3);border-color:var(--blue);}
 
-    /* ── Misc ──────────────────────────────────── */
-    .section-divider {
-      border: none; border-top: 1px solid var(--border);
-      margin: .5rem 1rem;
-    }
-    @media (min-width: 480px) {
-      .stat-grid { grid-template-columns: 1fr 1fr 1fr; }
-    }
-  </style>
+.water-actions{
+  display:flex;gap:.6rem;
+  padding:.5rem 1rem;
+}
+.wtr-btn{
+  flex:1;padding:1.1rem;border-radius:14px;
+  font-weight:800;font-size:1.6rem;
+  font-family:'Inter',sans-serif;cursor:pointer;
+  transition:transform .15s;border:none;
+}
+.wtr-btn:active{transform:scale(.92);}
+.wtr-add{background:linear-gradient(135deg,#2574a9,var(--blue));color:#fff;}
+.wtr-rem{background:var(--card);border:1.5px solid var(--border)!important;color:var(--muted);}
+
+.water-tip{
+  margin:.25rem 1rem;
+  background:rgba(52,152,219,.07);
+  border:1px solid rgba(52,152,219,.15);
+  border-radius:12px;padding:.7rem 1rem;
+  font-size:.8rem;color:#7fb3d3;
+  text-align:center;line-height:1.5;
+}
+
+/* ── Tasbi page ── */
+.tasbi-head{text-align:center;padding:1rem 1rem .25rem;}
+.tasbi-count{
+  font-size:clamp(4rem,18vw,6rem);
+  font-weight:900;line-height:1;
+  background:linear-gradient(135deg,var(--gold),#ffe082);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.tasbi-sub{font-size:.75rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:.2rem;}
+
+.target-row{display:flex;gap:.5rem;justify-content:center;margin:.75rem 0;}
+.tgt{
+  padding:.4rem 1.2rem;border-radius:20px;
+  background:var(--card);border:1.5px solid var(--border);
+  font-size:.85rem;color:var(--muted);cursor:pointer;
+  transition:all .2s;font-weight:600;
+}
+.tgt.on{background:rgba(240,192,64,.12);border-color:rgba(240,192,64,.4);color:var(--gold);}
+
+.tasbi-btn{
+  width:min(200px,56vw);height:min(200px,56vw);
+  border-radius:50%;margin:0 auto 1rem;
+  background:radial-gradient(circle at 38% 35%,#1e3d28,#0f2018);
+  border:3px solid rgba(46,204,113,.25);
+  box-shadow:0 0 50px rgba(46,204,113,.12),inset 0 0 30px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;
+  transition:transform .1s,box-shadow .1s;
+  user-select:none;-webkit-user-select:none;
+  -webkit-touch-callout:none;
+}
+.tasbi-btn:active,.tasbi-btn.pressed{
+  transform:scale(.91);
+  box-shadow:0 0 20px rgba(46,204,113,.25),inset 0 0 30px rgba(0,0,0,.6);
+}
+.tasbi-btn-icon{font-size:3.2rem;pointer-events:none;}
+.tasbi-btn-lbl{font-size:.65rem;color:var(--green);letter-spacing:2.5px;font-weight:700;pointer-events:none;margin-top:.2rem;}
+
+.dhikr-card{
+  margin:.25rem 1rem .75rem;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:1rem;text-align:center;
+}
+.dhikr-arabic{font-size:1.6rem;color:var(--gold);direction:rtl;margin-bottom:.3rem;line-height:1.4;}
+.dhikr-roman{font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+.btn-reset{
+  display:block;margin:0 auto .5rem;
+  background:var(--card);border:1.5px solid var(--border);
+  color:var(--muted);padding:.55rem 1.5rem;
+  border-radius:10px;cursor:pointer;font-size:.85rem;
+  font-family:'Inter',sans-serif;
+}
+
+/* ── Scoreboard ── */
+.sync-banner{
+  margin:.6rem 1rem;
+  background:rgba(52,152,219,.08);
+  border:1px solid rgba(52,152,219,.2);
+  border-radius:14px;padding:.85rem 1rem;
+  display:flex;align-items:center;gap:.75rem;
+}
+.sync-banner i{font-size:1.4rem;color:var(--blue);flex-shrink:0;}
+.sync-banner p{flex:1;font-size:.8rem;color:var(--muted);margin:0;line-height:1.4;}
+.sync-banner button{
+  background:var(--blue);border:none;color:#fff;
+  padding:.5rem 1rem;border-radius:8px;
+  font-size:.82rem;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;white-space:nowrap;
+  flex-shrink:0;
+}
+
+.board-family{
+  padding:.25rem 1rem .5rem;
+  font-size:.82rem;color:var(--muted);
+}
+.board-family strong{color:var(--gold);}
+
+.board-rows{padding:0 1rem;display:flex;flex-direction:column;gap:.6rem;}
+.board-row{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:1rem 1.1rem;
+  display:flex;align-items:center;gap:.8rem;
+}
+.board-row.me{border-color:rgba(46,204,113,.3);background:rgba(46,204,113,.05);}
+.board-medal{font-size:1.4rem;min-width:32px;text-align:center;}
+.board-info{flex:1;min-width:0;}
+.board-name{font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.board-meta{font-size:.72rem;color:var(--muted);margin-top:2px;}
+.board-steps{text-align:right;}
+.board-steps-val{font-size:1.2rem;font-weight:800;color:var(--green);}
+.board-steps-lbl{font-size:.65rem;color:var(--muted);}
+.board-empty{
+  text-align:center;padding:3rem 1rem;
+  color:var(--muted);font-size:.88rem;line-height:2;
+}
+.board-empty i{font-size:2.5rem;display:block;margin-bottom:.5rem;color:rgba(255,255,255,.15);}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;top:1rem;left:50%;transform:translateX(-50%);
+  background:rgba(26,37,53,.97);border:1px solid var(--border);
+  border-radius:10px;padding:.65rem 1.3rem;
+  font-size:.85rem;white-space:nowrap;
+  z-index:999;opacity:0;transition:opacity .25s;
+  pointer-events:none;max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;}
+
+/* ── Install bottom banner ── */
+.install-bar{
+  display:none;
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:500px;
+  background:rgba(16,24,32,.97);
+  border-top:1px solid rgba(46,204,113,.25);
+  padding:.9rem 1rem calc(.9rem + var(--safe-bottom));
+  z-index:150;align-items:center;gap:.75rem;
+}
+.install-bar img{width:44px;height:44px;border-radius:10px;flex-shrink:0;}
+.install-bar-info{flex:1;}
+.install-bar-info strong{display:block;font-size:.88rem;color:var(--gold);}
+.install-bar-info span{font-size:.73rem;color:var(--muted);}
+.install-bar button{
+  background:linear-gradient(135deg,var(--green2),var(--green));
+  border:none;color:#fff;font-weight:700;font-size:.82rem;
+  padding:.6rem 1.1rem;border-radius:8px;cursor:pointer;
+  font-family:'Inter',sans-serif;white-space:nowrap;
+}
+.install-bar-close{
+  background:none;border:none;color:rgba(255,255,255,.3);
+  font-size:1.1rem;cursor:pointer;padding:4px 6px;flex-shrink:0;
+}
+</style>
 </head>
 <body>
-<div class="app-shell">
 
-<!-- ── Setup Overlay ─────────────────────────────────── -->
-<div id="setupOverlay">
-  <div class="setup-card">
-    <div style="font-size:3rem;margin-bottom:.5rem">🚶‍♂️</div>
-    <h2>Family of Walkers</h2>
-    <p style="margin-bottom:1.25rem">Enter your name to get started.</p>
+<!-- ═══════════════ SETUP SCREEN ═══════════════ -->
+<div class="setup" id="setup">
+  <div class="setup-box">
+    <span class="setup-logo">🚶‍♂️</span>
+    <div class="setup-title">Family Walkers</div>
+    <p class="setup-sub">Track steps together.<br>Compete, motivate, celebrate.</p>
 
-    <!-- Install button — always visible -->
-    <div id="installRow" style="margin-bottom:1rem">
-      <button id="btnInstallSetup" onclick="installApp()" style="
-        width:100%;padding:.75rem;
-        background:linear-gradient(135deg,#1a3a5c,#2980b9);
-        border:1px solid rgba(52,152,219,.5);
-        border-radius:12px;color:#fff;font-weight:700;
-        font-size:.88rem;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;gap:.5rem
-      ">
-        📲 Install App on Your Phone
+    <!-- Install button -->
+    <div id="installRow">
+      <button class="install-btn" id="btnInstallSetup" onclick="installApp()">
+        <i class="bi bi-phone-fill"></i> Install App on Your Phone
       </button>
-      <p id="iosInstallHint" style="display:none;font-size:.72rem;color:var(--muted);margin-top:.5rem;text-align:center;line-height:1.5">
-        On iPhone: tap <strong style="color:var(--text)">Share</strong> →
-        <strong style="color:var(--text)">Add to Home Screen</strong>
-      </p>
+      <div class="ios-hint" id="iosHint">
+        📲 Tap the <strong>Share</strong> button in Safari, then tap<br>
+        <strong>"Add to Home Screen"</strong> → <strong>Add</strong>
+      </div>
     </div>
 
-    <input class="setup-input" id="setupName" placeholder="Your name (e.g. Ahmed)" maxlength="24" />
+    <!-- Step 1: Name -->
+    <div id="s1">
+      <input class="inp" id="inpName" placeholder="Your name (e.g. Ahmed)" maxlength="24"/>
+      <button class="btn-primary" onclick="goStep2()">Continue →</button>
+    </div>
 
     <!-- Step 2: Create or Join -->
-    <div id="familyChoice" style="display:none">
-      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem">Do you want to create a new family group or join an existing one?</p>
-      <div style="display:flex;gap:.6rem;margin-bottom:.75rem">
-        <button onclick="showCreate()" style="flex:1;padding:.7rem;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.4);color:#2ecc71;border-radius:10px;font-weight:700;cursor:pointer;font-size:.85rem">
-          ➕ Create Family
-        </button>
-        <button onclick="showJoin()" style="flex:1;padding:.7rem;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:10px;font-weight:700;cursor:pointer;font-size:.85rem">
-          🔗 Join Family
-        </button>
+    <div id="s2" style="display:none">
+      <p class="setup-note">Join an existing family group or create a new one?</p>
+      <div class="choice-row">
+        <button class="btn-choice btn-create" onclick="goCreate()">➕ Create Family</button>
+        <button class="btn-choice btn-join"   onclick="goJoin()">🔗 Join Family</button>
       </div>
     </div>
 
-    <!-- Create flow -->
-    <div id="createFlow" style="display:none">
-      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">Your family code (share this with everyone):</p>
-      <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
-        <input class="setup-input" id="generatedCode" readonly style="margin-bottom:0;flex:1;font-weight:700;letter-spacing:2px;color:var(--gold)" />
-        <button onclick="regenerateCode()" style="background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--muted);padding:.5rem .75rem;border-radius:10px;cursor:pointer;font-size:1rem">🔄</button>
+    <!-- Step 3a: Create -->
+    <div id="s3create" style="display:none">
+      <p class="setup-note">Your family code — share this with everyone:</p>
+      <div class="code-row">
+        <input class="code-val" id="genCode" readonly/>
+        <button class="btn-regen" onclick="regenCode()">🔄</button>
       </div>
-      <button class="btn-green" onclick="saveSetupCreate()" style="margin-bottom:.6rem">Start Walking 🚶</button>
-      <button onclick="shareCode()" style="width:100%;padding:.7rem;background:#25D366;border:none;border-radius:12px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">
-        📲 Share on WhatsApp
+      <button class="btn-primary" onclick="finishCreate()">Start Walking 🚶</button>
+      <button class="btn-wa" onclick="shareWA()">📲 Share on WhatsApp</button>
+      <button class="btn-back" onclick="backToS2()">← Back</button>
+    </div>
+
+    <!-- Step 3b: Join -->
+    <div id="s3join" style="display:none">
+      <p class="setup-note">Enter the family code someone shared with you:</p>
+      <input class="inp" id="inpCode" placeholder="e.g. AHMED-4521" maxlength="20" style="text-transform:uppercase"/>
+      <button class="btn-primary" onclick="finishJoin()">Join Family 🚶</button>
+      <button class="btn-back" onclick="backToS2()">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TOAST ═══════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════ MAIN SHELL ═══════════════ -->
+<div class="shell">
+
+  <div class="pages">
+
+    <!-- ─────────── WALK ─────────── -->
+    <div class="page active" id="pgWalk">
+
+      <div class="page-header">
+        <div class="page-title">🚶 Today's Walk</div>
+        <div class="user-tag" onclick="changeUser()">
+          <i class="bi bi-person-fill"></i>
+          <span id="hdrName">—</span>
+        </div>
+      </div>
+
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg viewBox="0 0 240 240" style="width:100%;height:100%">
+            <circle cx="120" cy="120" r="104" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="14"/>
+            <circle id="arc" cx="120" cy="120" r="104" fill="none"
+              stroke="url(#g1)" stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="654" stroke-dashoffset="654"
+              transform="rotate(-90 120 120)"/>
+            <defs>
+              <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#27ae60"/>
+                <stop offset="100%" stop-color="#a8f5c9"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="ring-inner">
+            <div class="ring-num" id="stepsNum">0</div>
+            <div class="ring-lbl">Steps</div>
+            <div class="ring-goal" id="stepsGoalLbl">/ 10,000</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-val" id="sTime">0:00</div>
+          <div class="stat-lbl">Duration</div>
+        </div>
+        <div class="stat">
+          <div class="stat-icon">📍</div>
+          <div class="stat-val" id="sDist">0.00</div>
+          <div class="stat-lbl">Kilometres</div>
+        </div>
+        <div class="stat">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-val" id="sCal">0</div>
+          <div class="stat-lbl">Calories</div>
+        </div>
+        <div class="stat">
+          <div class="stat-icon">❤️</div>
+          <div class="stat-val" id="sHR">—</div>
+          <div class="stat-lbl">Est. Heart Rate</div>
+        </div>
+      </div>
+
+      <div class="hr-card">
+        <div class="hr-head">
+          <span class="hr-head-lbl">Heart Zone</span>
+          <span class="hr-zone" id="hrZone" style="color:var(--muted)">—</span>
+        </div>
+        <div class="hr-track"><div class="hr-fill" id="hrFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="walk-btns">
+        <button class="wbtn wbtn-start" id="btnStart" onclick="startWalk()">
+          <i class="bi bi-play-fill"></i> Start
+        </button>
+        <button class="wbtn wbtn-stop" id="btnStop" onclick="stopWalk()" style="display:none">
+          <i class="bi bi-stop-fill"></i> Stop
+        </button>
+        <button class="wbtn wbtn-sync" onclick="doSync()">
+          <i class="bi bi-cloud-upload-fill"></i> Sync
+        </button>
+      </div>
+      <p class="sensor-note">Keep screen on while walking · Step count uses your phone's motion sensor</p>
+    </div>
+
+    <!-- ─────────── WATER ─────────── -->
+    <div class="page" id="pgWater">
+      <div class="page-header">
+        <div class="page-title">💧 Water Intake</div>
+        <div style="font-size:.78rem;color:var(--muted)" id="waterDate"></div>
+      </div>
+
+      <div class="water-hero">
+        <span class="water-emoji">🫗</span>
+        <div class="water-big">
+          <span id="waterNum">0</span><span>/8</span>
+        </div>
+        <p class="water-msg" id="waterMsg">Tap + to log a glass</p>
+      </div>
+
+      <div class="glass-grid" id="glassGrid"></div>
+
+      <div class="water-actions">
+        <button class="wtr-btn wtr-rem" onclick="addWater(-1)">−</button>
+        <button class="wtr-btn wtr-add" onclick="addWater(1)">＋</button>
+      </div>
+
+      <div class="water-tip">
+        💡 Aim for 8 glasses (2 litres) a day.<br>
+        Hydration keeps your walks energised!
+      </div>
+
+      <div class="sync-banner">
+        <i class="bi bi-cloud-arrow-up"></i>
+        <p>Sync your water intake with the family board</p>
+        <button onclick="doSync()">Sync</button>
+      </div>
+    </div>
+
+    <!-- ─────────── TASBI ─────────── -->
+    <div class="page" id="pgTasbi">
+      <div class="page-header">
+        <div class="page-title">📿 Tasbi</div>
+        <div style="font-size:.78rem;color:var(--muted)" id="tasbiTotalLbl">Today: 0</div>
+      </div>
+
+      <div class="tasbi-head">
+        <div class="tasbi-count" id="tasbiNum">0</div>
+        <div class="tasbi-sub" id="tasbiTargetLbl">Target: 33</div>
+      </div>
+
+      <div class="target-row">
+        <div class="tgt on" onclick="setTarget(33,this)">33</div>
+        <div class="tgt"    onclick="setTarget(99,this)">99</div>
+        <div class="tgt"    onclick="setTarget(100,this)">100</div>
+      </div>
+
+      <div class="tasbi-btn" id="tasbiBtn"
+        ontouchstart="bumpTasbi(event)" onclick="bumpTasbi(event)">
+        <div class="tasbi-btn-icon">📿</div>
+        <div class="tasbi-btn-lbl">TAP</div>
+      </div>
+
+      <div class="dhikr-card" id="dhikrCard">
+        <div class="dhikr-arabic">سُبْحَانَ اللَّهِ</div>
+        <div class="dhikr-roman">Subhaan Allaah — Glory be to Allah</div>
+      </div>
+
+      <button class="btn-reset" onclick="resetTasbi()">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset
       </button>
     </div>
 
-    <!-- Join flow -->
-    <div id="joinFlow" style="display:none">
-      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">Enter the family code your family leader shared:</p>
-      <input class="setup-input" id="joinCode" placeholder="e.g. AHMED-4521" maxlength="20" style="text-transform:uppercase" />
-      <button class="btn-green" onclick="saveSetupJoin()">Join & Walk 🚶</button>
-    </div>
+    <!-- ─────────── BOARD ─────────── -->
+    <div class="page" id="pgBoard">
+      <div class="page-header">
+        <div class="page-title">🏆 Family Board</div>
+        <div style="font-size:.78rem;color:var(--muted)" id="boardDate"></div>
+      </div>
 
-    <!-- Next button (after name entered) -->
-    <button id="btnNext" class="btn-green" onclick="nextSetupStep()">Next →</button>
-  </div>
-</div>
+      <div class="sync-banner">
+        <i class="bi bi-cloud-arrow-up"></i>
+        <p>Upload your latest steps to the scoreboard</p>
+        <button onclick="doSync()">Sync Now</button>
+      </div>
 
-<!-- ── Sheet URL Setup Overlay ───────────────────────── -->
-<div id="sheetSetupOverlay" style="display:none;position:fixed;inset:0;background:rgba(10,20,28,.97);z-index:210;align-items:center;justify-content:center;padding:1.5rem">
-  <div class="setup-card">
-    <div style="font-size:2.5rem;margin-bottom:.5rem">📊</div>
-    <h2 style="font-size:1.2rem">Connect Google Sheet</h2>
-    <p>Paste your Apps Script Web App URL below.<br>
-    <a href="https://github.com/mjaffry01/FamilyOfWalkers#setup" target="_blank" style="color:#2ecc71;font-size:.8rem">How to get this URL →</a></p>
-    <input class="setup-input" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/..." />
-    <button class="btn-green" onclick="saveSheetUrl()">Save & Connect</button>
-    <button onclick="document.getElementById('sheetSetupOverlay').style.display='none'" style="background:none;border:none;color:var(--muted);margin-top:.75rem;cursor:pointer;font-size:.82rem">Cancel</button>
-  </div>
-</div>
+      <p class="board-family">Family: <strong id="boardFamilyLbl">—</strong></p>
 
-<!-- ── Toast ─────────────────────────────────────────── -->
-<div class="toast-box" id="toastBox"></div>
-
-<!-- ══════════════════════════════════════════════════════
-     PAGE 1 — WALK (Pedometer)
-══════════════════════════════════════════════════════ -->
-<div class="page active" id="pageWalk">
-
-  <div class="app-header">
-    <div class="app-title">🚶 Today's Walk</div>
-    <div class="user-chip" onclick="changeUser()">
-      <i class="bi bi-person-fill"></i>
-      <span id="headerName">—</span>
-    </div>
-  </div>
-
-  <!-- Steps circle -->
-  <div class="steps-circle-wrap">
-    <div class="steps-circle">
-      <svg viewBox="0 0 220 220">
-        <circle cx="110" cy="110" r="96" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="12"/>
-        <circle id="progressArc" cx="110" cy="110" r="96" fill="none"
-          stroke="url(#arcGrad)" stroke-width="12" stroke-linecap="round"
-          stroke-dasharray="603" stroke-dashoffset="603"/>
-        <defs>
-          <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#27ae60"/>
-            <stop offset="100%" stop-color="#2ecc71"/>
-          </linearGradient>
-        </defs>
-      </svg>
-      <div class="steps-circle-inner">
-        <div class="steps-num" id="stepsNum">0</div>
-        <div class="steps-lbl">Steps</div>
-        <div class="steps-goal" id="stepsGoal">Goal: 10,000</div>
+      <div class="board-rows" id="boardRows">
+        <div class="board-empty">
+          <i class="bi bi-people"></i>
+          No one has synced yet.<br>Tap Sync Now to be first! 🏆
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Stat cards -->
-  <div class="stat-grid">
-    <div class="stat-card">
-      <div class="s-icon">⏱️</div>
-      <div class="s-val" id="statTime">0:00</div>
-      <div class="s-lbl">Duration</div>
-    </div>
-    <div class="stat-card">
-      <div class="s-icon">📍</div>
-      <div class="s-val" id="statDist">0.00</div>
-      <div class="s-lbl">km</div>
-    </div>
-    <div class="stat-card">
-      <div class="s-icon">🔥</div>
-      <div class="s-val" id="statCal">0</div>
-      <div class="s-lbl">kcal</div>
-    </div>
-    <div class="stat-card">
-      <div class="s-icon">❤️</div>
-      <div class="s-val" id="statHR">—</div>
-      <div class="s-lbl">Est. HR</div>
-    </div>
-  </div>
+  </div><!-- /pages -->
 
-  <!-- Heart rate bar -->
-  <div class="heart-bar-wrap">
-    <div class="heart-bar-head">
-      <span>Heart zone</span>
-      <span id="hrZone" style="color:var(--muted)">—</span>
-    </div>
-    <div class="heart-bar"><div class="heart-fill" id="hrBar" style="width:0%"></div></div>
-  </div>
-
-  <hr class="section-divider" />
-
-  <!-- Controls -->
-  <div class="walk-controls">
-    <button class="btn-walk btn-start" id="btnStart" onclick="startWalk()">
-      <i class="bi bi-play-fill"></i> Start
+  <!-- ─── Bottom Nav ─── -->
+  <nav class="nav">
+    <button class="nav-item on" onclick="goPage('Walk',this)">
+      <i class="bi bi-person-walking"></i>Walk
     </button>
-    <button class="btn-walk btn-stop d-none" id="btnStop" onclick="stopWalk()">
-      <i class="bi bi-stop-fill"></i> Stop
+    <button class="nav-item" onclick="goPage('Water',this)">
+      <i class="bi bi-droplet-fill"></i>Water
     </button>
-    <button class="btn-walk btn-sync" onclick="syncToBoard()">
-      <i class="bi bi-cloud-upload-fill"></i> Sync
+    <button class="nav-item" onclick="goPage('Tasbi',this)">
+      <i class="bi bi-circle-fill" style="font-size:18px"></i>Tasbi
     </button>
-  </div>
+    <button class="nav-item" onclick="goPage('Board',this)">
+      <i class="bi bi-trophy-fill"></i>Board
+    </button>
+  </nav>
 
-  <div style="text-align:center;padding:0 1rem .5rem">
-    <small style="color:var(--muted);font-size:.72rem">
-      <i class="bi bi-info-circle"></i>
-      Keep the app open while walking. Sensor accuracy varies by device.
-    </small>
-  </div>
+</div><!-- /shell -->
 
+<!-- ─── Install bottom bar ─── -->
+<div class="install-bar" id="installBar">
+  <img src="/icon-192.png" alt="icon"/>
+  <div class="install-bar-info">
+    <strong>Install Family Walkers</strong>
+    <span>Add to Home Screen · works offline</span>
+  </div>
+  <button id="btnInstallBar">Install</button>
+  <button class="install-bar-close" onclick="document.getElementById('installBar').style.display='none'">✕</button>
 </div>
-
-<!-- ══════════════════════════════════════════════════════
-     PAGE 2 — WATER
-══════════════════════════════════════════════════════ -->
-<div class="page" id="pageWater">
-
-  <div class="app-header">
-    <div class="app-title">💧 Water Intake</div>
-    <div style="font-size:.78rem;color:var(--muted)" id="waterDate">Today</div>
-  </div>
-
-  <div class="water-hero">
-    <div class="water-icon">🫗</div>
-    <div class="water-count"><span id="waterNum">0</span><span style="font-size:2rem;color:var(--muted)">/8</span></div>
-    <div class="water-goal-lbl" id="waterMsg">Tap + to log a glass of water</div>
-  </div>
-
-  <!-- Glass dots -->
-  <div class="glasses-grid" id="glassesGrid"></div>
-
-  <div class="water-btns">
-    <button class="btn-water btn-rem" onclick="addWater(-1)">−</button>
-    <button class="btn-water btn-add" onclick="addWater(1)">＋</button>
-  </div>
-
-  <p class="water-tip">
-    <i class="bi bi-droplet-half" style="color:var(--blue)"></i>
-    Aim for 8 glasses (2 litres) a day. Hydration keeps your walks energised!
-  </p>
-
-  <div class="sync-strip">
-    <i class="bi bi-cloud-arrow-up"></i>
-    <p>Sync your water intake with the family board.</p>
-    <button onclick="syncToBoard()">Sync</button>
-  </div>
-
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     PAGE 3 — TASBI
-══════════════════════════════════════════════════════ -->
-<div class="page" id="pageTasbi">
-
-  <div class="app-header">
-    <div class="app-title">📿 Tasbi</div>
-    <div style="font-size:.78rem;color:var(--muted)" id="tasbiTotal">Total today: 0</div>
-  </div>
-
-  <div class="tasbi-wrap">
-
-    <div class="tasbi-count-display" id="tasbiNum">0</div>
-    <div class="tasbi-sub" id="tasbiTarget">Target: 33</div>
-
-    <div class="tasbi-targets">
-      <div class="tasbi-target active" onclick="setTarget(33,this)">33</div>
-      <div class="tasbi-target" onclick="setTarget(99,this)">99</div>
-      <div class="tasbi-target" onclick="setTarget(100,this)">100</div>
-    </div>
-
-    <button class="tasbi-btn" id="tasbiBtn" ontouchstart="tasbiBump()" onclick="tasbiBump()">
-      <div class="tasbi-btn-icon">📿</div>
-      <div class="tasbi-btn-lbl">TAP</div>
-    </button>
-
-    <!-- Phrase card -->
-    <div class="tasbi-phrase" id="tasbiPhrase">
-      <div class="arabic">سُبْحَانَ اللَّهِ</div>
-      <div class="roman">Subhaan Allaah — Glory be to Allah</div>
-    </div>
-
-    <button class="tasbi-reset" onclick="resetTasbi()">
-      <i class="bi bi-arrow-counterclockwise"></i> Reset
-    </button>
-
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     PAGE 4 — SCOREBOARD
-══════════════════════════════════════════════════════ -->
-<div class="page" id="pageBoard">
-
-  <div class="app-header">
-    <div class="app-title">🏆 Family Board</div>
-    <div style="font-size:.78rem;color:var(--muted)" id="boardDate">Today</div>
-  </div>
-
-  <div class="board-header">
-    <h3>Family: <span id="boardFamily" style="color:var(--gold)">—</span></h3>
-    <p>Steps synced today — keep walking! 🚶</p>
-  </div>
-
-  <div class="sync-strip">
-    <i class="bi bi-cloud-arrow-up"></i>
-    <p>Upload your latest steps to the board.</p>
-    <button onclick="syncToBoard()">Sync Now</button>
-  </div>
-
-  <div class="board-list" id="boardList">
-    <div class="board-empty">
-      <i class="bi bi-cloud-slash" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
-      No data yet — press Sync to be the first!
-    </div>
-  </div>
-
-</div>
-
-<!-- ── Bottom Nav ─────────────────────────────────────── -->
-<nav class="bottom-nav">
-  <button class="nav-btn active" onclick="showPage('Walk',this)">
-    <i class="bi bi-person-walking"></i>Walk
-  </button>
-  <button class="nav-btn" onclick="showPage('Water',this)">
-    <i class="bi bi-droplet-fill"></i>Water
-  </button>
-  <button class="nav-btn" onclick="showPage('Tasbi',this)">
-    <i class="bi bi-circle-fill" style="font-size:1rem"></i>Tasbi
-  </button>
-  <button class="nav-btn" onclick="showPage('Board',this)">
-    <i class="bi bi-trophy-fill"></i>Board
-  </button>
-</nav>
-
-</div><!-- end app-shell -->
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Google Sheets backend (Apps Script web app — 100% free) -->
-<script>
-// ── Google Sheets backend URL (hardcoded — works for everyone) ──
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwUO0QhXUuE2T6O6rF0W8ui2Xv7zDKCS5knD0qQYDQ/exec'
-
-async function sheetFetch(params) {
-  // Apps Script redirects — we must follow and use no-cors won't work,
-  // so we use a plain GET with all params in the URL
-  const url = SHEET_URL + '?' + new URLSearchParams(params).toString()
-  const res = await fetch(url, {
-    method: 'GET',
-    redirect: 'follow',
-  })
-  // Apps Script sometimes returns HTML on auth error — detect it
-  const text = await res.text()
-  if (text.trim().startsWith('<')) {
-    throw new Error('Apps Script returned HTML — check deployment settings')
-  }
-  return JSON.parse(text)
-}
-
-window._syncToSheet = async function(data) {
-  if (!SHEET_URL) { toast('⚠️ No server URL configured'); return false }
-  try {
-    const json = await sheetFetch({
-      action: 'sync',
-      family: data.family.toLowerCase(),
-      name:   data.name,
-      steps:  data.steps,
-      water:  data.water,
-      km:     data.km,
-      cal:    data.cal,
-      date:   todayStr()
-    })
-    return json.status === 'ok'
-  } catch(e) {
-    console.error('Sync error:', e)
-    toast('Sync failed — see fix instructions')
-    return false
-  }
-}
-
-window._loadBoard = async function(family) {
-  if (!SHEET_URL) return
-  try {
-    const rows = await sheetFetch({
-      action: 'board',
-      family: family.toLowerCase(),
-      date:   todayStr()
-    })
-    if (Array.isArray(rows)) {
-      rows.sort((a,b) => b.steps - a.steps)
-      renderBoard(rows)
-    }
-  } catch(e) {
-    console.error('Board error:', e)
-  }
-}
-
-function showSheetSetup() {
-  document.getElementById('sheetSetupOverlay').style.display = 'flex'
-}
-
-window.saveSheetUrl = function() {
-  const url = document.getElementById('sheetUrlInput').value.trim()
-  if (!url.startsWith('https://script.google.com')) {
-    toast('Please paste a valid Apps Script URL'); return
-  }
-  localStorage.setItem('fow_sheet_url', url)
-  location.reload()
-}
-</script>
 
 <script>
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════
+const SHEET_URL  = 'https://script.google.com/macros/s/AKfycbwUO0QhXUuE2T6O6rF0W8ui2Xv7zDKCS5knD0qQYDQ/exec'
+const STEP_GOAL  = 10000
+const STRIDE_M   = 0.762
+
+// ════════════════════════════════════════════
 //  STATE
-// ══════════════════════════════════════════════════════
-let userName   = ''
-let familyCode = ''
-let steps      = 0
-let walkActive = false
-let walkStart  = null
-let walkSecs   = 0
-let walkTimer  = null
-let timerInterval = null
-let motionBuffer  = []
-let lastPeak      = 0
-let water         = 0
-let tasbiCount    = 0
-let tasbiDayTotal = 0
-let tasbiTarget   = 33
-const STEP_GOAL   = 10000
-const STRIDE_M    = 0.762   // average stride ~76cm
-const WEIGHT_KG   = 70      // default — used for calorie estimate
+// ════════════════════════════════════════════
+let userName='', familyCode=''
+let steps=0, walkSecs=0, walkActive=false, walkStart=null
+let timerInt=null, motionBuf=[], lastPeak=0
+let water=0, tasbiCount=0, tasbiDay=0, tasbiTarget=33
 
-const TASBI_PHRASES = [
-  { arabic:'سُبْحَانَ اللَّهِ',      roman:'Subhaan Allaah — Glory be to Allah' },
-  { arabic:'الْحَمْدُ لِلَّهِ',      roman:'Alhamdulillaah — All praise is for Allah' },
-  { arabic:'اللَّهُ أَكْبَرُ',       roman:'Allaahu Akbar — Allah is the Greatest' },
-  { arabic:'لَا إِلَهَ إِلَّا اللَّهُ', roman:'Laa ilaaha illa Allaah — None has the right to be worshipped but Allah' },
-  { arabic:'أَسْتَغْفِرُ اللَّهَ',   roman:"Astaghfirullaah — I seek Allah's forgiveness" },
+const DHIKR=[
+  {a:'سُبْحَانَ اللَّهِ',      r:'Subhaan Allaah — Glory be to Allah'},
+  {a:'الْحَمْدُ لِلَّهِ',      r:'Alhamdulillaah — All praise is for Allah'},
+  {a:'اللَّهُ أَكْبَرُ',       r:'Allaahu Akbar — Allah is the Greatest'},
+  {a:'لَا إِلَهَ إِلَّا اللَّهُ',r:'Laa ilaaha illa Allaah — None worthy of worship but Allah'},
+  {a:'أَسْتَغْفِرُ اللَّهَ',   r:"Astaghfirullaah — I seek Allah's forgiveness"},
 ]
 
-// ══════════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════════
-function todayStr() {
-  return new Date().toISOString().split('T')[0]
-}
+// ════════════════════════════════════════════
+//  STORAGE
+// ════════════════════════════════════════════
+function todayStr(){return new Date().toISOString().split('T')[0]}
 
-function fmtSecs(s) {
-  const m = Math.floor(s/60), sec = s%60
-  return `${m}:${String(sec).padStart(2,'0')}`
-}
-
-function toast(msg, dur=2800) {
-  const el = document.getElementById('toastBox')
-  el.textContent = msg; el.classList.add('show')
-  setTimeout(() => el.classList.remove('show'), dur)
-}
-
-function save() {
-  localStorage.setItem('fow_state', JSON.stringify({
-    userName, familyCode, steps, walkSecs, water,
-    tasbiDayTotal, date: todayStr()
+function save(){
+  localStorage.setItem('fow2',JSON.stringify({
+    userName,familyCode,steps,walkSecs,water,tasbiDay,date:todayStr()
   }))
 }
 
-function loadSaved() {
-  try {
-    const d = JSON.parse(localStorage.getItem('fow_state') || '{}')
-    if (d.date !== todayStr()) {
-      // New day — reset counters
-      steps = 0; walkSecs = 0; water = 0; tasbiDayTotal = 0
-    } else {
-      steps = d.steps || 0
-      walkSecs = d.walkSecs || 0
-      water = d.water || 0
-      tasbiDayTotal = d.tasbiDayTotal || 0
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem('fow2')||'{}')
+    userName=d.userName||''; familyCode=d.familyCode||''
+    if(d.date===todayStr()){
+      steps=d.steps||0; walkSecs=d.walkSecs||0
+      water=d.water||0; tasbiDay=d.tasbiDay||0
     }
-    userName   = d.userName   || ''
-    familyCode = d.familyCode || ''
-  } catch(e) {}
+  }catch(e){}
 }
 
-// ══════════════════════════════════════════════════════
-//  SETUP
-// ══════════════════════════════════════════════════════
-function generateCode(name) {
-  const rand = Math.floor(1000 + Math.random() * 9000)
-  const base = (name || 'FAMILY').toUpperCase().replace(/\s+/g,'').slice(0,8)
-  return `${base}-${rand}`
+// ════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════
+function toast(msg,dur=2800){
+  const el=document.getElementById('toast')
+  el.textContent=msg; el.classList.add('show')
+  setTimeout(()=>el.classList.remove('show'),dur)
 }
 
-function regenerateCode() {
-  const name = document.getElementById('setupName').value.trim()
-  document.getElementById('generatedCode').value = generateCode(name)
-}
-
-function nextSetupStep() {
-  const n = document.getElementById('setupName').value.trim()
-  if (!n) { toast('Please enter your name first'); return }
-  document.getElementById('btnNext').style.display    = 'none'
-  document.getElementById('familyChoice').style.display = 'block'
-}
-
-function showCreate() {
-  document.getElementById('familyChoice').style.display = 'none'
-  document.getElementById('createFlow').style.display   = 'block'
-  const name = document.getElementById('setupName').value.trim()
-  document.getElementById('generatedCode').value = generateCode(name)
-}
-
-function showJoin() {
-  document.getElementById('familyChoice').style.display = 'none'
-  document.getElementById('joinFlow').style.display     = 'block'
-  // Pre-fill if code came from URL
-  const urlCode = new URLSearchParams(location.search).get('family')
-  if (urlCode) document.getElementById('joinCode').value = urlCode.toUpperCase()
-}
-
-function saveSetupCreate() {
-  const n = document.getElementById('setupName').value.trim()
-  const c = document.getElementById('generatedCode').value.trim()
-  if (!n || !c) return
-  userName = n; familyCode = c
-  save()
-  document.getElementById('setupOverlay').style.display = 'none'
-  initUI()
-}
-
-function saveSetupJoin() {
-  const n = document.getElementById('setupName').value.trim()
-  const c = document.getElementById('joinCode').value.trim().toUpperCase()
-  if (!n) { toast('Please enter your name'); return }
-  if (!c) { toast('Please enter the family code'); return }
-  userName = n; familyCode = c
-  save()
-  document.getElementById('setupOverlay').style.display = 'none'
-  initUI()
-}
-
-function shareCode() {
-  const code = document.getElementById('generatedCode').value.trim()
-  const appUrl = `${location.origin}${location.pathname}?family=${code}`
-  const msg = `🚶 Join our Family of Walkers!\n\nTap the link to join — your family code is already filled in:\n${appUrl}\n\nLet's see who walks the most! 🏆`
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`
-  window.open(waUrl, '_blank')
-}
-
-function changeUser() {
-  if (!confirm('Change your name / family?')) return
-  // Reset setup UI
-  document.getElementById('setupName').value = userName
-  document.getElementById('btnNext').style.display       = 'block'
-  document.getElementById('familyChoice').style.display  = 'none'
-  document.getElementById('createFlow').style.display    = 'none'
-  document.getElementById('joinFlow').style.display      = 'none'
-  document.getElementById('setupOverlay').style.display  = 'flex'
-}
-
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════
 //  NAV
-// ══════════════════════════════════════════════════════
-function showPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
-  document.getElementById('page'+name).classList.add('active')
-  btn.classList.add('active')
-  if (name === 'Board') loadBoard()
+// ════════════════════════════════════════════
+function goPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('on'))
+  document.getElementById('pg'+name).classList.add('active')
+  btn.classList.add('on')
+  if(name==='Board') loadBoard()
 }
 
-// ══════════════════════════════════════════════════════
-//  PEDOMETER — device motion
-// ══════════════════════════════════════════════════════
-function startWalk() {
-  // iOS 13+ permission
-  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission().then(r => {
-      if (r === 'granted') { _beginWalk() }
-      else toast('Motion permission denied')
+// ════════════════════════════════════════════
+//  SETUP
+// ════════════════════════════════════════════
+function show(id){['s1','s2','s3create','s3join'].forEach(s=>document.getElementById(s).style.display=s===id?'block':'none')}
+
+function goStep2(){
+  const n=document.getElementById('inpName').value.trim()
+  if(!n){toast('Please enter your name');return}
+  show('s2')
+}
+function goCreate(){
+  show('s3create')
+  document.getElementById('genCode').value=genCode(document.getElementById('inpName').value.trim())
+}
+function goJoin(){
+  show('s3join')
+  const url=new URLSearchParams(location.search).get('family')
+  if(url) document.getElementById('inpCode').value=url.toUpperCase()
+}
+function backToS2(){show('s2')}
+function regenCode(){document.getElementById('genCode').value=genCode(document.getElementById('inpName').value.trim())}
+function genCode(name){
+  return (name||'FAMILY').toUpperCase().replace(/\s+/g,'').slice(0,8)+'-'+Math.floor(1000+Math.random()*9000)
+}
+function finishCreate(){
+  const n=document.getElementById('inpName').value.trim()
+  const c=document.getElementById('genCode').value.trim()
+  if(!n||!c)return
+  userName=n; familyCode=c; save()
+  document.getElementById('setup').style.display='none'
+  initUI()
+}
+function finishJoin(){
+  const n=document.getElementById('inpName').value.trim()
+  const c=document.getElementById('inpCode').value.trim().toUpperCase()
+  if(!n){toast('Enter your name');return}
+  if(!c){toast('Enter the family code');return}
+  userName=n; familyCode=c; save()
+  document.getElementById('setup').style.display='none'
+  initUI()
+}
+function shareWA(){
+  const code=document.getElementById('genCode').value.trim()
+  const url=`${location.origin}${location.pathname}?family=${code}`
+  const msg=`🚶 Join our Family of Walkers!\n\nTap the link — your family code is already filled:\n${url}\n\nLet's see who walks the most! 🏆`
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank')
+}
+function changeUser(){
+  if(!confirm('Change name or family?'))return
+  document.getElementById('inpName').value=userName
+  show('s1')
+  document.getElementById('setup').style.display='flex'
+}
+
+// ════════════════════════════════════════════
+//  INIT UI
+// ════════════════════════════════════════════
+function initUI(){
+  document.getElementById('hdrName').textContent=userName
+  document.getElementById('boardFamilyLbl').textContent=familyCode
+  const d=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})
+  document.getElementById('waterDate').textContent=d
+  document.getElementById('boardDate').textContent=d
+  updateStepUI(); renderWater()
+  document.getElementById('tasbiTotalLbl').textContent='Today: '+tasbiDay.toLocaleString()
+}
+
+// ════════════════════════════════════════════
+//  PEDOMETER
+// ════════════════════════════════════════════
+function startWalk(){
+  if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
+    DeviceMotionEvent.requestPermission().then(r=>{
+      if(r==='granted')_beginWalk(); else toast('Motion permission denied')
     }).catch(console.error)
-  } else {
-    _beginWalk()
-  }
+  } else _beginWalk()
 }
 
-function _beginWalk() {
-  walkActive = true
-  walkStart  = Date.now() - walkSecs * 1000
-  document.getElementById('btnStart').classList.add('d-none')
-  document.getElementById('btnStop').classList.remove('d-none')
-
-  // Timer
-  timerInterval = setInterval(() => {
-    walkSecs = Math.floor((Date.now() - walkStart) / 1000)
-    document.getElementById('statTime').textContent = fmtSecs(walkSecs)
-    updateHeartRate()
-    save()
-  }, 1000)
-
-  // Motion
-  window.addEventListener('devicemotion', onMotion)
+function _beginWalk(){
+  walkActive=true
+  walkStart=Date.now()-walkSecs*1000
+  document.getElementById('btnStart').style.display='none'
+  document.getElementById('btnStop').style.display='flex'
+  timerInt=setInterval(()=>{
+    walkSecs=Math.floor((Date.now()-walkStart)/1000)
+    document.getElementById('sTime').textContent=fmt(walkSecs)
+    updateHR(); save()
+  },1000)
+  window.addEventListener('devicemotion',onMotion)
   toast('Walk started — go! 🚶')
 }
 
-function stopWalk() {
-  walkActive = false
-  clearInterval(timerInterval)
-  window.removeEventListener('devicemotion', onMotion)
-  document.getElementById('btnStop').classList.add('d-none')
-  document.getElementById('btnStart').classList.remove('d-none')
-  save()
-  toast('Walk stopped. Great job! 🏅')
+function stopWalk(){
+  walkActive=false
+  clearInterval(timerInt)
+  window.removeEventListener('devicemotion',onMotion)
+  document.getElementById('btnStop').style.display='none'
+  document.getElementById('btnStart').style.display='flex'
+  save(); toast('Walk stopped. Great job! 🏅')
 }
 
-function onMotion(e) {
-  const a = e.accelerationIncludingGravity
-  if (!a) return
-  const mag = Math.sqrt(a.x**2 + a.y**2 + a.z**2)
-  motionBuffer.push({ mag, t: Date.now() })
-  if (motionBuffer.length > 20) motionBuffer.shift()
+function onMotion(e){
+  const a=e.accelerationIncludingGravity; if(!a) return
+  const mag=Math.sqrt(a.x**2+a.y**2+a.z**2)
+  motionBuf.push({mag,t:Date.now()})
+  if(motionBuf.length>20)motionBuf.shift()
   detectStep()
 }
 
-function detectStep() {
-  if (motionBuffer.length < 4) return
-  const recent = motionBuffer.slice(-4)
-  const avg    = recent.reduce((s,r) => s + r.mag, 0) / recent.length
-  const peak   = recent[1]
-  const now    = Date.now()
-  if (
-    peak.mag > avg * 1.12 &&
-    peak.mag > recent[0].mag &&
-    peak.mag > recent[2].mag &&
-    peak.mag > 10.5 &&
-    (now - lastPeak) > 280
-  ) {
-    lastPeak = now
-    steps++
-    updateStepUI()
-    save()
+function detectStep(){
+  if(motionBuf.length<4)return
+  const r=motionBuf.slice(-4)
+  const avg=r.reduce((s,x)=>s+x.mag,0)/r.length
+  const pk=r[1]; const now=Date.now()
+  if(pk.mag>avg*1.12&&pk.mag>r[0].mag&&pk.mag>r[2].mag&&pk.mag>10.5&&(now-lastPeak)>280){
+    lastPeak=now; steps++; updateStepUI(); save()
   }
 }
 
-function updateStepUI() {
-  document.getElementById('stepsNum').textContent = steps.toLocaleString()
-  const pct = Math.min(steps / STEP_GOAL, 1)
-  const circ = 2 * Math.PI * 96
-  document.getElementById('progressArc').style.strokeDashoffset = circ * (1 - pct)
-
-  const km  = (steps * STRIDE_M / 1000).toFixed(2)
-  const cal = Math.round(steps * 0.04 * (WEIGHT_KG / 70))
-  document.getElementById('statDist').textContent = km
-  document.getElementById('statCal').textContent  = cal
-  document.getElementById('stepsGoal').textContent = `Goal: ${STEP_GOAL.toLocaleString()}`
+function updateStepUI(){
+  document.getElementById('stepsNum').textContent=steps.toLocaleString()
+  document.getElementById('stepsGoalLbl').textContent='/ '+STEP_GOAL.toLocaleString()
+  const pct=Math.min(steps/STEP_GOAL,1)
+  document.getElementById('arc').style.strokeDashoffset=654*(1-pct)
+  const km=(steps*STRIDE_M/1000).toFixed(2)
+  const cal=Math.round(steps*0.04)
+  document.getElementById('sDist').textContent=km
+  document.getElementById('sCal').textContent=cal
 }
 
-function updateHeartRate() {
-  if (walkSecs < 30) return
-  const stepsPerMin = (steps / walkSecs) * 60
-  // Rough estimate: resting ~70, max +50 at brisk pace
-  const hr = Math.round(Math.min(70 + stepsPerMin * 0.55, 165))
-  document.getElementById('statHR').textContent = hr
-
-  let zone, color, pct
-  if      (hr < 90)  { zone='Rest';   color='#3498db'; pct=15 }
-  else if (hr < 115) { zone='Fat burn';color='#2ecc71'; pct=40 }
-  else if (hr < 135) { zone='Cardio'; color='#f39c12'; pct=65 }
-  else if (hr < 155) { zone='Aerobic';color='#e67e22'; pct=82 }
-  else               { zone='Peak';   color='#e74c3c'; pct=98 }
-
-  document.getElementById('hrZone').textContent  = zone
-  document.getElementById('hrZone').style.color  = color
-  document.getElementById('hrBar').style.width   = pct + '%'
-  document.getElementById('hrBar').style.background = `linear-gradient(90deg,#e74c3c,${color})`
+function updateHR(){
+  if(walkSecs<30)return
+  const spm=(steps/walkSecs)*60
+  const hr=Math.round(Math.min(70+spm*0.55,165))
+  document.getElementById('sHR').textContent=hr
+  let zone,color,pct
+  if(hr<90){zone='Rest';color='#3498db';pct=15}
+  else if(hr<115){zone='Fat Burn';color='#2ecc71';pct=40}
+  else if(hr<135){zone='Cardio';color='#f39c12';pct=65}
+  else if(hr<155){zone='Aerobic';color='#e67e22';pct=82}
+  else{zone='Peak';color='#e74c3c';pct=98}
+  document.getElementById('hrZone').textContent=zone
+  document.getElementById('hrZone').style.color=color
+  document.getElementById('hrFill').style.width=pct+'%'
 }
 
-// ══════════════════════════════════════════════════════
+function fmt(s){return Math.floor(s/60)+':'+(s%60+'').padStart(2,'0')}
+
+// ════════════════════════════════════════════
 //  WATER
-// ══════════════════════════════════════════════════════
-function addWater(delta) {
-  water = Math.max(0, Math.min(12, water + delta))
-  save()
-  renderWater()
-  if (delta > 0) {
-    if ('vibrate' in navigator) navigator.vibrate(30)
-    if (water === 8) toast('🎉 Daily water goal reached!')
+// ════════════════════════════════════════════
+function addWater(d){
+  water=Math.max(0,Math.min(12,water+d))
+  save(); renderWater()
+  if(d>0&&navigator.vibrate)navigator.vibrate(25)
+  if(water===8)toast('🎉 Daily water goal reached!')
+}
+
+function renderWater(){
+  document.getElementById('waterNum').textContent=water
+  const msgs=['Tap + to log a glass','Good start! 💧','Nice! Stay hydrated 💦',
+    'Halfway there!','4 down, 4 to go 💪','Great progress!','Almost there! 🫗',
+    'One more glass!','🎉 Goal reached!','Above goal — amazing!','Super hydrated!💦','🌊','Incredible! 🏆']
+  document.getElementById('waterMsg').textContent=msgs[Math.min(water,12)]
+  const g=document.getElementById('glassGrid')
+  g.innerHTML=''
+  for(let i=1;i<=8;i++){
+    const d=document.createElement('div')
+    d.className='glass'+(i<=water?' full':'')
+    d.textContent=i<=water?'💧':'○'
+    g.appendChild(d)
   }
 }
 
-function renderWater() {
-  document.getElementById('waterNum').textContent = water
-  const msgs = [
-    'Tap + to log a glass of water',
-    'Good start! Keep sipping 💧',
-    'Nice! Stay hydrated 💦',
-    'Halfway there — keep going!',
-    '4 down, 4 to go 💪',
-    'Great progress!',
-    'Almost there! One more 🫗',
-    'Almost at your goal!',
-    '🎉 Goal reached! Excellent hydration!',
-    'Above goal — well done!',
-    'Wow, very hydrated! 💦',
-    'Super hydrated! 🏆',
-    '12 glasses — incredible! 🌊'
-  ]
-  document.getElementById('waterMsg').textContent = msgs[Math.min(water, 12)]
-
-  // Dots
-  const grid = document.getElementById('glassesGrid')
-  grid.innerHTML = ''
-  for (let i = 1; i <= 8; i++) {
-    const d = document.createElement('div')
-    d.className = 'glass-dot' + (i <= water ? ' filled' : '')
-    d.textContent = i <= water ? '💧' : '○'
-    grid.appendChild(d)
-  }
-}
-
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════
 //  TASBI
-// ══════════════════════════════════════════════════════
-function tasbiBump() {
-  tasbiCount++
-  tasbiDayTotal++
-  if ('vibrate' in navigator) navigator.vibrate(18)
-  document.getElementById('tasbiNum').textContent = tasbiCount
-  document.getElementById('tasbiTotal').textContent = `Total today: ${tasbiDayTotal.toLocaleString()}`
-
-  // Change phrase every 33
-  const phraseIdx = Math.floor((tasbiDayTotal - 1) / 33) % TASBI_PHRASES.length
-  const p = TASBI_PHRASES[phraseIdx]
-  document.getElementById('tasbiPhrase').innerHTML =
-    `<div class="arabic">${p.arabic}</div><div class="roman">${p.roman}</div>`
-
-  // Target reached
-  if (tasbiCount >= tasbiTarget) {
-    if ('vibrate' in navigator) navigator.vibrate([60,40,60,40,100])
-    toast(`✨ ${tasbiTarget} completed! الحمد لله`)
-    tasbiCount = 0
-    document.getElementById('tasbiNum').textContent = 0
+// ════════════════════════════════════════════
+let lastBump=0
+function bumpTasbi(e){
+  e.preventDefault()
+  const now=Date.now()
+  if(now-lastBump<150)return // debounce
+  lastBump=now
+  tasbiCount++; tasbiDay++
+  if(navigator.vibrate)navigator.vibrate(15)
+  const btn=document.getElementById('tasbiBtn')
+  btn.classList.add('pressed')
+  setTimeout(()=>btn.classList.remove('pressed'),100)
+  document.getElementById('tasbiNum').textContent=tasbiCount
+  document.getElementById('tasbiTotalLbl').textContent='Today: '+tasbiDay.toLocaleString()
+  // cycle dhikr
+  const idx=Math.floor((tasbiDay-1)/33)%DHIKR.length
+  const ph=DHIKR[idx]
+  document.getElementById('dhikrCard').innerHTML=
+    `<div class="dhikr-arabic">${ph.a}</div><div class="dhikr-roman">${ph.r}</div>`
+  if(tasbiCount>=tasbiTarget){
+    if(navigator.vibrate)navigator.vibrate([60,40,60,40,100])
+    toast('✨ '+tasbiTarget+' completed! الحمد لله')
+    tasbiCount=0
+    document.getElementById('tasbiNum').textContent=0
   }
   save()
 }
 
-function setTarget(n, el) {
-  tasbiTarget = n
-  tasbiCount  = 0
-  document.querySelectorAll('.tasbi-target').forEach(t => t.classList.remove('active'))
-  el.classList.add('active')
-  document.getElementById('tasbiTarget').textContent = `Target: ${n}`
-  document.getElementById('tasbiNum').textContent    = 0
+function setTarget(n,el){
+  tasbiTarget=n; tasbiCount=0
+  document.querySelectorAll('.tgt').forEach(t=>t.classList.remove('on'))
+  el.classList.add('on')
+  document.getElementById('tasbiTargetLbl').textContent='Target: '+n
+  document.getElementById('tasbiNum').textContent=0
 }
 
-function resetTasbi() {
-  tasbiCount = 0
-  document.getElementById('tasbiNum').textContent = 0
+function resetTasbi(){
+  tasbiCount=0
+  document.getElementById('tasbiNum').textContent=0
   toast('Tasbi reset')
 }
 
-// ══════════════════════════════════════════════════════
-//  SYNC & SCOREBOARD
-// ══════════════════════════════════════════════════════
-async function syncToBoard() {
-  if (!userName) { toast('Set your name first'); return }
-  const km  = parseFloat((steps * STRIDE_M / 1000).toFixed(2))
-  const cal = Math.round(steps * 0.04)
-  const ok = await window._syncToSheet({
-    family: familyCode, name: userName,
-    steps, water, km, cal
-  })
-  if (ok) {
-    toast('✅ Synced to family board!')
-    loadBoard()
-  }
+// ════════════════════════════════════════════
+//  SYNC & BOARD
+// ════════════════════════════════════════════
+async function sheetFetch(params){
+  const url=SHEET_URL+'?'+new URLSearchParams(params)
+  const r=await fetch(url,{redirect:'follow'})
+  const t=await r.text()
+  if(t.trim().startsWith('<'))throw new Error('Auth error')
+  return JSON.parse(t)
 }
 
-async function loadBoard() {
-  document.getElementById('boardFamily').textContent = familyCode || '—'
-  if (window._loadBoard && familyCode) window._loadBoard(familyCode)
+async function doSync(){
+  if(!userName){toast('Set your name first');return}
+  toast('Syncing… ☁️')
+  try{
+    const km=parseFloat((steps*STRIDE_M/1000).toFixed(2))
+    const cal=Math.round(steps*0.04)
+    const json=await sheetFetch({action:'sync',family:familyCode.toLowerCase(),
+      name:userName,steps,water,km,cal,date:todayStr()})
+    if(json.status==='ok'){toast('✅ Synced!'); loadBoard()}
+    else toast('Sync failed')
+  }catch(e){console.error(e);toast('Sync failed — check connection')}
 }
 
-function renderBoard(rows) {
-  const me   = userName
-  const list = document.getElementById('boardList')
-  if (!rows.length) {
-    list.innerHTML = `<div class="board-empty">
-      <i class="bi bi-cloud-slash" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>
-      No data yet — press Sync to be the first!
-    </div>`
+async function loadBoard(){
+  document.getElementById('boardFamilyLbl').textContent=familyCode
+  if(!familyCode)return
+  try{
+    const rows=await sheetFetch({action:'board',family:familyCode.toLowerCase(),date:todayStr()})
+    if(Array.isArray(rows)){rows.sort((a,b)=>b.steps-a.steps);renderBoard(rows)}
+  }catch(e){console.error(e)}
+}
+
+function renderBoard(rows){
+  const el=document.getElementById('boardRows')
+  if(!rows.length){
+    el.innerHTML='<div class="board-empty"><i class="bi bi-people"></i>No one has synced yet.<br>Tap Sync Now to be first! 🏆</div>'
     return
   }
-  const medals = ['🥇','🥈','🥉']
-  list.innerHTML = rows.map((r,i) => `
-    <div class="board-row ${r.name === me ? 'me' : ''}">
-      <div class="board-rank">${medals[i] || (i+1)}</div>
-      <div class="board-name">
-        ${r.name} ${r.name === me ? '(you)' : ''}
-        <small>${r.km} km · ${r.cal} kcal · 💧 ${r.water}</small>
+  const medals=['🥇','🥈','🥉']
+  el.innerHTML=rows.map((r,i)=>`
+    <div class="board-row ${r.name===userName?'me':''}">
+      <div class="board-medal">${medals[i]||'#'+(i+1)}</div>
+      <div class="board-info">
+        <div class="board-name">${r.name}${r.name===userName?' (you)':''}</div>
+        <div class="board-meta">${r.km} km · ${r.cal} kcal · 💧 ${r.water}</div>
       </div>
       <div class="board-steps">
-        <div class="val">${r.steps.toLocaleString()}</div>
-        <div class="sub">steps</div>
+        <div class="board-steps-val">${r.steps.toLocaleString()}</div>
+        <div class="board-steps-lbl">steps</div>
       </div>
-    </div>
-  `).join('')
+    </div>`).join('')
 }
 
-// ══════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════
-function initUI() {
-  document.getElementById('headerName').textContent = userName
-  document.getElementById('boardFamily').textContent = familyCode
-  const now = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})
-  document.getElementById('waterDate').textContent = now
-  document.getElementById('boardDate').textContent  = now
-  updateStepUI()
-  renderWater()
-  document.getElementById('tasbiTotal').textContent = `Total today: ${tasbiDayTotal.toLocaleString()}`
+// ════════════════════════════════════════════
+//  PWA INSTALL
+// ════════════════════════════════════════════
+let dip=null
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)
+const isStandalone=window.matchMedia('(display-mode:standalone)').matches
+
+// Hide install row if already installed
+if(isStandalone){
+  document.getElementById('installRow').style.display='none'
+} else if(isIOS){
+  document.getElementById('btnInstallSetup').textContent='📲 How to Install on iPhone'
 }
 
-// ── Boot ─────────────────────────────────────────────
-loadSaved()
-
-// If opened via WhatsApp share link (?family=CODE), pre-fill join
-const urlFamily = new URLSearchParams(location.search).get('family')
-if (urlFamily && !familyCode) {
-  // Show setup with join pre-filled
-  document.getElementById('setupOverlay').style.display = 'flex'
-} else if (userName && familyCode) {
-  document.getElementById('setupOverlay').style.display = 'none'
-  initUI()
-}
-// else setup overlay stays visible (default)
-</script>
-
-<!-- PWA: SW + Install banner -->
-<div id="installBanner" style="
-  display:none; position:fixed; bottom:72px; left:0; right:0;
-  background:rgba(18,35,48,.97); border-top:1px solid rgba(46,204,113,.3);
-  padding:12px 16px; z-index:150;
-  align-items:center; gap:12px;
-">
-  <img src="/icon.svg" width="40" height="40" style="border-radius:10px;flex-shrink:0" />
-  <div style="flex:1">
-    <div style="font-weight:700;font-size:.85rem;color:#f0c040">Install Family of Walkers</div>
-    <div style="font-size:.72rem;color:#6b8aad">Add to Home Screen · works offline</div>
-  </div>
-  <button id="btnInstall" style="background:linear-gradient(135deg,#27ae60,#2ecc71);border:none;color:#fff;font-weight:700;font-size:.8rem;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap">Install</button>
-  <button id="btnDismiss" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:1.1rem;cursor:pointer;padding:4px">✕</button>
-</div>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}))
-}
-
-let dip = null
-
-// Android/Chrome — capture install prompt
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault()
-  dip = e
-  // Show install button on setup screen
-  document.getElementById('installRow').style.display = 'block'
-  // Also show bottom banner if already past setup
-  document.getElementById('installBanner').style.display = 'flex'
-})
-
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
-const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
-
-// If already installed as PWA, hide the install button
-if (isInStandaloneMode) {
-  document.getElementById('installRow').style.display = 'none'
-} else if (isIOS) {
-  // iPhone: show tap-share instructions
-  document.getElementById('btnInstallSetup').innerHTML = '📲 Install on iPhone — tap here'
-  document.getElementById('iosInstallHint').style.display = 'block'
-}
-
-window.installApp = function() {
-  if (dip) {
-    // Android / Chrome — native prompt
+function installApp(){
+  if(dip){
     dip.prompt()
-    dip.userChoice.then(() => {
-      dip = null
-      document.getElementById('installRow').style.display = 'none'
-      document.getElementById('installBanner').style.display = 'none'
-    })
-  } else if (isIOS) {
-    // Toggle hint visibility
-    const hint = document.getElementById('iosInstallHint')
-    hint.style.display = hint.style.display === 'none' ? 'block' : 'none'
+    dip.userChoice.then(()=>{dip=null;document.getElementById('installRow').style.display='none'})
+  } else if(isIOS){
+    document.getElementById('iosHint').style.display=
+      document.getElementById('iosHint').style.display==='block'?'none':'block'
   } else {
-    // Desktop Chrome / other — show manual instructions
-    toast('Open this app in Chrome on your phone to install it 📱')
+    toast('Open in Chrome on your phone for install 📱')
   }
 }
 
-document.getElementById('btnInstall').onclick = () => {
-  if (!dip) return; dip.prompt()
-  dip.userChoice.then(() => { dip=null; document.getElementById('installBanner').style.display='none' })
-}
-document.getElementById('btnDismiss').onclick = () => {
-  document.getElementById('installBanner').style.display = 'none'
-}
-window.addEventListener('appinstalled', () => {
-  document.getElementById('installBanner').style.display = 'none'
-  document.getElementById('installRow').style.display = 'none'
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); dip=e
+  document.getElementById('installBar').style.display='flex'
 })
+document.getElementById('btnInstallBar').onclick=()=>{
+  if(!dip)return; dip.prompt()
+  dip.userChoice.then(()=>{dip=null;document.getElementById('installBar').style.display='none'})
+}
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('installBar').style.display='none'
+  document.getElementById('installRow').style.display='none'
+})
+
+// ════════════════════════════════════════════
+//  SERVICE WORKER
+// ════════════════════════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))
+}
+
+// ════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════
+load()
+
+// Pre-fill family code from URL share link
+const urlFamily=new URLSearchParams(location.search).get('family')
+if(urlFamily&&!familyCode){
+  document.getElementById('inpCode').value=urlFamily.toUpperCase()
+}
+
+if(userName&&familyCode){
+  document.getElementById('setup').style.display='none'
+  initUI()
+}
 </script>
 </body>
 </html>
