@@ -318,11 +318,45 @@
   <div class="setup-card">
     <div style="font-size:3rem;margin-bottom:.5rem">🚶‍♂️</div>
     <h2>Family of Walkers</h2>
-    <p>Enter your name and a family code so everyone's steps sync to the same scoreboard.</p>
+    <p style="margin-bottom:1.25rem">Enter your name to get started.</p>
+
     <input class="setup-input" id="setupName" placeholder="Your name (e.g. Ahmed)" maxlength="24" />
-    <input class="setup-input" id="setupCode" placeholder="Family code (e.g. WALKERS2025)" maxlength="20" style="text-transform:uppercase" />
-    <p style="font-size:.72rem;color:var(--muted);margin:-.25rem 0 .75rem">Everyone in your family must use the same code.</p>
-    <button class="btn-green" onclick="saveSetup()">Let's Walk! 🚶</button>
+
+    <!-- Step 2: Create or Join -->
+    <div id="familyChoice" style="display:none">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem">Do you want to create a new family group or join an existing one?</p>
+      <div style="display:flex;gap:.6rem;margin-bottom:.75rem">
+        <button onclick="showCreate()" style="flex:1;padding:.7rem;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.4);color:#2ecc71;border-radius:10px;font-weight:700;cursor:pointer;font-size:.85rem">
+          ➕ Create Family
+        </button>
+        <button onclick="showJoin()" style="flex:1;padding:.7rem;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:10px;font-weight:700;cursor:pointer;font-size:.85rem">
+          🔗 Join Family
+        </button>
+      </div>
+    </div>
+
+    <!-- Create flow -->
+    <div id="createFlow" style="display:none">
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">Your family code (share this with everyone):</p>
+      <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+        <input class="setup-input" id="generatedCode" readonly style="margin-bottom:0;flex:1;font-weight:700;letter-spacing:2px;color:var(--gold)" />
+        <button onclick="regenerateCode()" style="background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--muted);padding:.5rem .75rem;border-radius:10px;cursor:pointer;font-size:1rem">🔄</button>
+      </div>
+      <button class="btn-green" onclick="saveSetupCreate()" style="margin-bottom:.6rem">Start Walking 🚶</button>
+      <button onclick="shareCode()" style="width:100%;padding:.7rem;background:#25D366;border:none;border-radius:12px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer">
+        📲 Share on WhatsApp
+      </button>
+    </div>
+
+    <!-- Join flow -->
+    <div id="joinFlow" style="display:none">
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">Enter the family code your family leader shared:</p>
+      <input class="setup-input" id="joinCode" placeholder="e.g. AHMED-4521" maxlength="20" style="text-transform:uppercase" />
+      <button class="btn-green" onclick="saveSetupJoin()">Join & Walk 🚶</button>
+    </div>
+
+    <!-- Next button (after name entered) -->
+    <button id="btnNext" class="btn-green" onclick="nextSetupStep()">Next →</button>
   </div>
 </div>
 
@@ -691,23 +725,77 @@ function loadSaved() {
 // ══════════════════════════════════════════════════════
 //  SETUP
 // ══════════════════════════════════════════════════════
-function saveSetup() {
+function generateCode(name) {
+  const rand = Math.floor(1000 + Math.random() * 9000)
+  const base = (name || 'FAMILY').toUpperCase().replace(/\s+/g,'').slice(0,8)
+  return `${base}-${rand}`
+}
+
+function regenerateCode() {
+  const name = document.getElementById('setupName').value.trim()
+  document.getElementById('generatedCode').value = generateCode(name)
+}
+
+function nextSetupStep() {
   const n = document.getElementById('setupName').value.trim()
-  const c = document.getElementById('setupCode').value.trim().toUpperCase()
-  if (!n) { toast('Please enter your name'); return }
-  if (!c) { toast('Please enter a family code'); return }
-  userName   = n
-  familyCode = c
+  if (!n) { toast('Please enter your name first'); return }
+  document.getElementById('btnNext').style.display    = 'none'
+  document.getElementById('familyChoice').style.display = 'block'
+}
+
+function showCreate() {
+  document.getElementById('familyChoice').style.display = 'none'
+  document.getElementById('createFlow').style.display   = 'block'
+  const name = document.getElementById('setupName').value.trim()
+  document.getElementById('generatedCode').value = generateCode(name)
+}
+
+function showJoin() {
+  document.getElementById('familyChoice').style.display = 'none'
+  document.getElementById('joinFlow').style.display     = 'block'
+  // Pre-fill if code came from URL
+  const urlCode = new URLSearchParams(location.search).get('family')
+  if (urlCode) document.getElementById('joinCode').value = urlCode.toUpperCase()
+}
+
+function saveSetupCreate() {
+  const n = document.getElementById('setupName').value.trim()
+  const c = document.getElementById('generatedCode').value.trim()
+  if (!n || !c) return
+  userName = n; familyCode = c
   save()
   document.getElementById('setupOverlay').style.display = 'none'
   initUI()
 }
 
+function saveSetupJoin() {
+  const n = document.getElementById('setupName').value.trim()
+  const c = document.getElementById('joinCode').value.trim().toUpperCase()
+  if (!n) { toast('Please enter your name'); return }
+  if (!c) { toast('Please enter the family code'); return }
+  userName = n; familyCode = c
+  save()
+  document.getElementById('setupOverlay').style.display = 'none'
+  initUI()
+}
+
+function shareCode() {
+  const code = document.getElementById('generatedCode').value.trim()
+  const appUrl = `${location.origin}${location.pathname}?family=${code}`
+  const msg = `🚶 Join our Family of Walkers!\n\nTap the link to join — your family code is already filled in:\n${appUrl}\n\nLet's see who walks the most! 🏆`
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`
+  window.open(waUrl, '_blank')
+}
+
 function changeUser() {
-  if (!confirm('Change your name / family code?')) return
+  if (!confirm('Change your name / family?')) return
+  // Reset setup UI
   document.getElementById('setupName').value = userName
-  document.getElementById('setupCode').value = familyCode
-  document.getElementById('setupOverlay').style.display = 'flex'
+  document.getElementById('btnNext').style.display       = 'block'
+  document.getElementById('familyChoice').style.display  = 'none'
+  document.getElementById('createFlow').style.display    = 'none'
+  document.getElementById('joinFlow').style.display      = 'none'
+  document.getElementById('setupOverlay').style.display  = 'flex'
 }
 
 // ══════════════════════════════════════════════════════
@@ -975,12 +1063,17 @@ function initUI() {
 
 // ── Boot ─────────────────────────────────────────────
 loadSaved()
-if (userName && familyCode) {
+
+// If opened via WhatsApp share link (?family=CODE), pre-fill join
+const urlFamily = new URLSearchParams(location.search).get('family')
+if (urlFamily && !familyCode) {
+  // Show setup with join pre-filled
+  document.getElementById('setupOverlay').style.display = 'flex'
+} else if (userName && familyCode) {
   document.getElementById('setupOverlay').style.display = 'none'
   initUI()
-} else {
-  // Show setup
 }
+// else setup overlay stays visible (default)
 </script>
 
 <!-- PWA: SW + Install banner -->
