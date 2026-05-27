@@ -599,25 +599,39 @@
 // ── Google Sheets backend URL (hardcoded — works for everyone) ──
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwUO0QhXUuE2T6O6rF0W8ui2Xv7zDKCS5knD0qQYDQ/exec'
 
+async function sheetFetch(params) {
+  // Apps Script redirects — we must follow and use no-cors won't work,
+  // so we use a plain GET with all params in the URL
+  const url = SHEET_URL + '?' + new URLSearchParams(params).toString()
+  const res = await fetch(url, {
+    method: 'GET',
+    redirect: 'follow',
+  })
+  // Apps Script sometimes returns HTML on auth error — detect it
+  const text = await res.text()
+  if (text.trim().startsWith('<')) {
+    throw new Error('Apps Script returned HTML — check deployment settings')
+  }
+  return JSON.parse(text)
+}
+
 window._syncToSheet = async function(data) {
   if (!SHEET_URL) { toast('⚠️ No server URL configured'); return false }
   try {
-    const params = new URLSearchParams({
-      action:  'sync',
-      family:  data.family.toLowerCase(),
-      name:    data.name,
-      steps:   data.steps,
-      water:   data.water,
-      km:      data.km,
-      cal:     data.cal,
-      date:    todayStr()
+    const json = await sheetFetch({
+      action: 'sync',
+      family: data.family.toLowerCase(),
+      name:   data.name,
+      steps:  data.steps,
+      water:  data.water,
+      km:     data.km,
+      cal:    data.cal,
+      date:   todayStr()
     })
-    const res = await fetch(SHEET_URL + '?' + params)
-    const json = await res.json()
     return json.status === 'ok'
   } catch(e) {
-    console.error(e)
-    toast('Sync failed — check connection')
+    console.error('Sync error:', e)
+    toast('Sync failed — see fix instructions')
     return false
   }
 }
@@ -625,14 +639,17 @@ window._syncToSheet = async function(data) {
 window._loadBoard = async function(family) {
   if (!SHEET_URL) return
   try {
-    const params = new URLSearchParams({ action: 'board', family: family.toLowerCase(), date: todayStr() })
-    const res  = await fetch(SHEET_URL + '?' + params)
-    const rows = await res.json()
-    rows.sort((a,b) => b.steps - a.steps)
-    renderBoard(rows)
+    const rows = await sheetFetch({
+      action: 'board',
+      family: family.toLowerCase(),
+      date:   todayStr()
+    })
+    if (Array.isArray(rows)) {
+      rows.sort((a,b) => b.steps - a.steps)
+      renderBoard(rows)
+    }
   } catch(e) {
-    console.error(e)
-    toast('Could not load board')
+    console.error('Board error:', e)
   }
 }
 
