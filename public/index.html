@@ -468,9 +468,15 @@ html,body{
       <button class="install-btn" id="btnInstallSetup" onclick="installApp()">
         <i class="bi bi-phone-fill"></i> Install App on Your Phone
       </button>
+      <!-- Android instructions -->
+      <div class="ios-hint" id="androidHint">
+        Open <strong>Chrome</strong> → tap the <strong>⋮ menu</strong> (top right) →
+        tap <strong>"Add to Home Screen"</strong> → <strong>Add</strong>
+      </div>
+      <!-- iOS instructions -->
       <div class="ios-hint" id="iosHint">
-        📲 Tap the <strong>Share</strong> button in Safari, then tap<br>
-        <strong>"Add to Home Screen"</strong> → <strong>Add</strong>
+        Open in <strong>Safari</strong> → tap the <strong>Share ⬆️</strong> button →
+        tap <strong>"Add to Home Screen"</strong> → <strong>Add</strong>
       </div>
     </div>
 
@@ -854,8 +860,10 @@ function initUI(){
 }
 
 // ════════════════════════════════════════════
-//  PEDOMETER
+//  PEDOMETER  — high-pass filtered peak detector
 // ════════════════════════════════════════════
+let usePureAccel = false   // set true if device provides acceleration without gravity
+
 function startWalk(){
   if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function'){
     DeviceMotionEvent.requestPermission().then(r=>{
@@ -865,7 +873,7 @@ function startWalk(){
 }
 
 function _beginWalk(){
-  walkActive=true
+  walkActive=true; motionBuf=[]
   walkStart=Date.now()-walkSecs*1000
   document.getElementById('btnStart').style.display='none'
   document.getElementById('btnStop').style.display='flex'
@@ -874,7 +882,7 @@ function _beginWalk(){
     document.getElementById('sTime').textContent=fmt(walkSecs)
     updateHR(); save()
   },1000)
-  window.addEventListener('devicemotion',onMotion)
+  window.addEventListener('devicemotion',onMotion,{passive:true})
   toast('Walk started — go! 🚶')
 }
 
@@ -888,20 +896,53 @@ function stopWalk(){
 }
 
 function onMotion(e){
-  const a=e.accelerationIncludingGravity; if(!a) return
-  const mag=Math.sqrt(a.x**2+a.y**2+a.z**2)
-  motionBuf.push({mag,t:Date.now()})
-  if(motionBuf.length>20)motionBuf.shift()
+  // Prefer pure acceleration (no gravity) — much cleaner signal
+  const pa = e.acceleration
+  const ga = e.accelerationIncludingGravity
+  let mag, pure=false
+
+  if(pa && pa.x!==null && pa.y!==null && pa.z!==null){
+    mag  = Math.sqrt(pa.x**2 + pa.y**2 + pa.z**2)
+    pure = true
+  } else if(ga && ga.x!==null){
+    mag = Math.sqrt(ga.x**2 + ga.y**2 + ga.z**2)
+  } else return
+
+  motionBuf.push({mag, t:Date.now(), pure})
+  if(motionBuf.length>30) motionBuf.shift()
   detectStep()
 }
 
+// Dynamic threshold — adapts to user's movement intensity
+let dynThreshold = 1.5  // for pure accel
+let peakBuffer   = []
+
 function detectStep(){
-  if(motionBuf.length<4)return
-  const r=motionBuf.slice(-4)
-  const avg=r.reduce((s,x)=>s+x.mag,0)/r.length
-  const pk=r[1]; const now=Date.now()
-  if(pk.mag>avg*1.12&&pk.mag>r[0].mag&&pk.mag>r[2].mag&&pk.mag>10.5&&(now-lastPeak)>280){
+  if(motionBuf.length < 8) return
+  const win   = motionBuf.slice(-8)
+  const pure  = win[0].pure
+  const avg   = win.reduce((s,x)=>s+x.mag,0)/win.length
+  const pk    = win[3]   // centre of window
+  const now   = Date.now()
+  const MIN_GAP = 320  // ms — caps at ~188 steps/min
+
+  // Adapt threshold: average recent peak heights
+  const THRESHOLD = pure
+    ? Math.max(1.2, avg * 0.6)    // pure accel: movement above local average
+    : Math.max(10.2, avg * 0.98)  // with gravity: just above resting magnitude
+
+  if(
+    pk.mag > win[2].mag &&    // local max
+    pk.mag > win[4].mag &&
+    pk.mag > THRESHOLD &&
+    (now - lastPeak) > MIN_GAP
+  ){
     lastPeak=now; steps++; updateStepUI(); save()
+
+    // Subtle flash on step counter so user sees it's counting
+    const el=document.getElementById('stepsNum')
+    el.style.opacity='.6'
+    setTimeout(()=>el.style.opacity='1',80)
   }
 }
 
@@ -1074,13 +1115,19 @@ if(isStandalone){
 
 function installApp(){
   if(dip){
+    // Chrome already captured the prompt — fire it directly
     dip.prompt()
     dip.userChoice.then(()=>{dip=null;document.getElementById('installRow').style.display='none'})
   } else if(isIOS){
-    document.getElementById('iosHint').style.display=
-      document.getElementById('iosHint').style.display==='block'?'none':'block'
+    // Show Safari instructions
+    const h=document.getElementById('iosHint')
+    h.style.display = h.style.display==='block' ? 'none' : 'block'
+    document.getElementById('androidHint').style.display='none'
   } else {
-    toast('Open in Chrome on your phone for install 📱')
+    // Android Chrome — show manual instructions
+    const h=document.getElementById('androidHint')
+    h.style.display = h.style.display==='block' ? 'none' : 'block'
+    document.getElementById('iosHint').style.display='none'
   }
 }
 
