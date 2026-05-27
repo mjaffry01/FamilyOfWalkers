@@ -326,6 +326,19 @@
   </div>
 </div>
 
+<!-- ── Sheet URL Setup Overlay ───────────────────────── -->
+<div id="sheetSetupOverlay" style="display:none;position:fixed;inset:0;background:rgba(10,20,28,.97);z-index:210;align-items:center;justify-content:center;padding:1.5rem">
+  <div class="setup-card">
+    <div style="font-size:2.5rem;margin-bottom:.5rem">📊</div>
+    <h2 style="font-size:1.2rem">Connect Google Sheet</h2>
+    <p>Paste your Apps Script Web App URL below.<br>
+    <a href="https://github.com/mjaffry01/FamilyOfWalkers#setup" target="_blank" style="color:#2ecc71;font-size:.8rem">How to get this URL →</a></p>
+    <input class="setup-input" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/..." />
+    <button class="btn-green" onclick="saveSheetUrl()">Save & Connect</button>
+    <button onclick="document.getElementById('sheetSetupOverlay').style.display='none'" style="background:none;border:none;color:var(--muted);margin-top:.75rem;cursor:pointer;font-size:.82rem">Cancel</button>
+  </div>
+</div>
+
 <!-- ── Toast ─────────────────────────────────────────── -->
 <div class="toast-box" id="toastBox"></div>
 
@@ -547,46 +560,31 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Firebase -->
-<script type="module">
-import { initializeApp }                         from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'
-import { getFirestore, doc, setDoc, collection,
-         query, where, getDocs, orderBy }        from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
+<!-- Google Sheets backend (Apps Script web app — 100% free) -->
+<script>
+// ── Paste your Apps Script Web App URL here after setup ──
+// See instructions below the app or in README
+const SHEET_URL = localStorage.getItem('fow_sheet_url') || ''
 
-// ── Firebase config ──────────────────────────────────
-const firebaseConfig = {
-  apiKey:            "AIzaSyC_ARA5butf4DGMFeENeZeyV7BLWOu3UR4",
-  authDomain:        "i-gift-you-cfc5a.firebaseapp.com",
-  projectId:         "i-gift-you-cfc5a",
-  storageBucket:     "i-gift-you-cfc5a.firebasestorage.app",
-  messagingSenderId: "944787707852",
-  appId:             "1:944787707852:web:61ec602fc46a1b6b96af69"
-}
-
-let db = null
-try {
-  const app = initializeApp(firebaseConfig)
-  db = getFirestore(app)
-} catch(e) {
-  console.warn('Firebase init failed — running in offline mode', e)
-}
-
-window._syncToFirebase = async function(data) {
-  if (!db) { toast('⚠️ Offline — set up Firebase to sync'); return false }
+window._syncToSheet = async function(data) {
+  if (!SHEET_URL) {
+    showSheetSetup()
+    return false
+  }
   try {
-    const dateStr = todayStr()
-    const docId   = `${data.family}_${data.name}_${dateStr}`.replace(/\s+/g,'_').toLowerCase()
-    await setDoc(doc(db, 'walks', docId), {
-      family: data.family.toLowerCase(),
-      name:   data.name,
-      steps:  data.steps,
-      water:  data.water,
-      km:     data.km,
-      cal:    data.cal,
-      date:   dateStr,
-      ts:     Date.now()
-    }, { merge: true })
-    return true
+    const params = new URLSearchParams({
+      action:  'sync',
+      family:  data.family.toLowerCase(),
+      name:    data.name,
+      steps:   data.steps,
+      water:   data.water,
+      km:      data.km,
+      cal:     data.cal,
+      date:    todayStr()
+    })
+    const res = await fetch(SHEET_URL + '?' + params)
+    const json = await res.json()
+    return json.status === 'ok'
   } catch(e) {
     console.error(e)
     toast('Sync failed — check connection')
@@ -595,21 +593,30 @@ window._syncToFirebase = async function(data) {
 }
 
 window._loadBoard = async function(family) {
-  if (!db) { toast('⚠️ Set up Firebase to see the board'); return }
+  if (!SHEET_URL) { showSheetSetup(); return }
   try {
-    const q = query(
-      collection(db, 'walks'),
-      where('family', '==', family.toLowerCase()),
-      where('date',   '==', todayStr())
-    )
-    const snap = await getDocs(q)
-    const rows = []
-    snap.forEach(d => rows.push(d.data()))
+    const params = new URLSearchParams({ action: 'board', family: family.toLowerCase(), date: todayStr() })
+    const res  = await fetch(SHEET_URL + '?' + params)
+    const rows = await res.json()
     rows.sort((a,b) => b.steps - a.steps)
     renderBoard(rows)
   } catch(e) {
     console.error(e)
+    toast('Could not load board')
   }
+}
+
+function showSheetSetup() {
+  document.getElementById('sheetSetupOverlay').style.display = 'flex'
+}
+
+window.saveSheetUrl = function() {
+  const url = document.getElementById('sheetUrlInput').value.trim()
+  if (!url.startsWith('https://script.google.com')) {
+    toast('Please paste a valid Apps Script URL'); return
+  }
+  localStorage.setItem('fow_sheet_url', url)
+  location.reload()
 }
 </script>
 
@@ -915,7 +922,7 @@ async function syncToBoard() {
   if (!userName) { toast('Set your name first'); return }
   const km  = parseFloat((steps * STRIDE_M / 1000).toFixed(2))
   const cal = Math.round(steps * 0.04)
-  const ok = await window._syncToFirebase({
+  const ok = await window._syncToSheet({
     family: familyCode, name: userName,
     steps, water, km, cal
   })
